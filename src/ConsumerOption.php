@@ -1,26 +1,28 @@
 <?php
 namespace Recoil\Amqp;
 
-use Icecave\Flip\AbstractOption;
+use Icecave\Flip\OptionSetTrait;
 
 /**
- * Options used when consuming from a queue.
+ * Options used to control the behavior of consumers.
  */
 final class ConsumerOption extends AbstractOption
 {
+    use OptionSetTrait;
+
     /**
      * Do not consume messages published by the same connection as the consumer.
      */
-    const NO_LOCAL = 'no_local';
+    private $noLocal = false;
 
     /**
      * Do not require the consumer to acknowledge messages.
      */
-    const NO_ACK = 'no_ack';
+    private $noAck = false;
 
     /**
      * Request exclusive access to the queue. This means that no other consumers
      * may exist on the queue.
      */
-    const EXCLUSIVE = 'exclusive';
+    private $exclusive = false;
 }

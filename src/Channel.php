@@ -9,18 +9,22 @@ interface Channel
     /**
      * Declare an exchange.
      *
-     * To get one of the pre-declared exchanges, use the following methods:
+     * This method declares a new exchange on the server. To get one of the
+     * pre-declared exchanges, use the one of the following methods:
      *
-     * @see Channel::directExchange()
-     * @see Channel::amqExchange()
+     * @see Channel::directExchange() to use the nameless, direct exchange, which is used to route messages to specific queues, by name.
+     * @see Channel::amqExchange() to use one of the "amq.<type>" exchanges, which are the pre-declared exchanges for each of the exchange types.
      *
-     * @param string       $name    The exchange name.
-     * @param ExchangeType $type    The exchange type.
-     * @param mixed        $options Declaration options.
+     * Exchange names beginning with "amq." are reserved and will not be created,
+     * however, this method can be used to access those exchanges if they
+     * already exist.
      *
-     * @see ExchangeOption
+     * @param string               $name    The exchange name.
+     * @param ExchangeType         $type    The exchange type.
+     * @param ExchangeOptions|null $options Options that affect the behaviour of the exchange, or null to use the defaults.
+     * @param DeclareMode|null     $mode    The declare mode, ACTIVE (create the exchange, the default) or PASSIVE (check if the exchange exists).
      *
-     * Via promise:
+     * Via a promise:
      * @return Exchange            The exchange.
      * @throws DeclareException    if the exchange could not be declared because it already exists with different options.
      * @throws ConnectionException if not connected to the AMQP server.
@@ -29,39 +33,42 @@ interface Channel
     public function exchange(
         $name,
         ExchangeType $type,
-        $options = []
+        ExceptionOptions $options = null,
+        DeclareMode $mode = null
     );
 
     /**
      * Get the pre-declared, nameless, direct exchange.
+     *
+     * This exchange is used to route messages to specific queues by name.
      *
      * Every queue is automatically bound to the nameless exchange with a
      * routing key the same as the queue name.
      *
      * @link https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges
      *
-     * @see Channel::exchange()
-     * @see Channel::amqExchange()
+     * @see Channel::exchange() to declare a new exchange.
+     * @see Channel::amqExchange() to use one of the "amq.<type>" exchanges, which are the pre-declared exchanges for each of the exchange types.
      *
      * Via promise:
-     * @return Exchange            The pre-declared, nameless, direct exchange.
+     * @return Exchange            The exchange.
      * @throws ConnectionException if not connected to the AMQP server.
      * @throws LogicException      if the channel has been closed.
      */
     public function directExchange();
 
     /**
-     * Get the pre-declared amq.* exchange of the given type.
+     * Get the pre-declared "amq.<type>" exchange of the given type.
      *
      * @link https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges
      *
-     * @see Channel::exchange()
-     * @see Channel::directExchange()
+     * @see Channel::exchange() to declare a new exchange.
+     * @see Channel::directExchange() to use the nameless, direct exchange, which is used to route messages to specific queues, by name.
      *
      * @param ExchangeType $type The exchange type.
      *
      * Via promise:
-     * @return Exchange            The amq.* exchange.
+     * @return Exchange            The exchange.
      * @throws ConnectionException if not connected to the AMQP server.
      * @throws LogicException      if the channel has been closed.
      */
@@ -73,10 +80,9 @@ interface Channel
      * Called with no arguments, this method will return an exclusive,
      * auto-deleting queue with a server-generated name.
      *
-     * @param string $name    The queue name, or an empty string to have the server generated a name.
-     * @param mixed  $options Declaration options.
-     *
-     * @see QueueOption
+     * @param string            $name    The queue name, or an empty string to use a random, unique name.
+     * @param QueueOptions|null $options Options that affect the behaviour of the queue, or null to use the defaults.
+     * @param DeclareMode|null  $mode    The declare mode, ACTIVE (create the queue, the default) or PASSIVE (check if the queue exists).
      *
      * Via promise:
      * @return Queue                   The queue.
@@ -85,24 +91,26 @@ interface Channel
      * @throws ConnectionException     if not connected to the AMQP server.
      * @throws LogicException          if the channel has been closed.
      */
-    public function queue($name = '', array $options = []);
+    public function queue(
+        $name = '',
+        QueueOptions $options = null,
+        DeclareMode $mode = null
+    );
 
     /**
-     * Set the channel's Quality-of-Service options.
+     * Set the channel's Quality-of-Service limits.
      *
-     * Please note that RabbitMQ's behaviour deviates from the AMQP
-     * specification in its handling of the global flag:
-     *
-     * @link https://www.rabbitmq.com/consumer-prefetch.html
-     *
-     * @param integer|null $count The maximum number of un-acknowledged messages to accept, or null for unlimited.
-     * @param integer|null $size  The maximum size of un-acknowledged messages to accept, in bytes, or null for unlimited.
+     * @param integer|null $count The maximum number of un-acknowledged messages to accept, or null to use the server default.
+     * @param integer|null $size  The maximum total size of un-acknowledged messages to accept, in bytes, or null to use the server default.
      * @param QosScope     $scope The scope at which the change is applied.
      *
      * Via promise:
-     * @return null
+     * @return null                on success.
      * @throws ConnectionException if not connected to the AMQP server.
      * @throws LogicException      if the channel has been closed.
+     *
+     * Please note that RabbitMQ does not currently (as of v3.5.5) support
+     * prefetch-size limits.
      */
     public function qos($count, $size = null, QosScope $scope = null);
 
@@ -110,7 +118,7 @@ interface Channel
      * Close the channel.
      *
      * Via promise:
-     * @return null
+     * @return null on success.
      */
     public function close();
 }

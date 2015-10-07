@@ -14,7 +14,8 @@
     "require": {
         "php": ">=5.6",
         "icecave/flip": "dev-develop",
-        "icecave/isolator": "~2"
+        "icecave/isolator": "~2",
+        "eloquent/enumeration": "^5.1"
     },
     "require-dev": {
         "eloquent/phony": "^0.3",

@@ -2,7 +2,6 @@
 namespace Recoil\Amqp;
 
 use Exception;
-use Icecave\Flip\OptionSet;
 use PHPUnit_Framework_TestCase;
 
 class DeclareExceptionTest extends PHPUnit_Framework_TestCase
@@ -13,16 +12,12 @@ class DeclareExceptionTest extends PHPUnit_Framework_TestCase
         $exception = DeclareException::exchangeTypeOrOptionMismatch(
             '<name>',
             ExchangeType::DIRECT(),
-            OptionSet::create(
-                ExchangeOption::class,
-                ExchangeOption::DURABLE(),
-                ExchangeOption::AUTO_DELETE()
-            ),
+            ExchangeOptions::internal(true),
             $previous
         );
 
         $this->assertSame(
-            'Failed to declare exchange "<name>", type "DIRECT" or options [DURABLE, AUTO_DELETE] do not match the server.',
+            'Failed to declare exchange "<name>", type "DIRECT" or options [internal] do not match the server.',
             $exception->getMessage()
         );
 
@@ -37,16 +32,12 @@ class DeclareExceptionTest extends PHPUnit_Framework_TestCase
         $previous = new Exception();
         $exception = DeclareException::queueOptionMismatch(
             '<name>',
-            OptionSet::create(
-                QueueOption::class,
-                QueueOption::DURABLE(),
-                QueueOption::AUTO_DELETE()
-            ),
+            QueueOptions::defaults(),
             $previous
         );
 
         $this->assertSame(
-            'Failed to declare queue "<name>", options [DURABLE, AUTO_DELETE] do not match the server.',
+            'Failed to declare queue "<name>", options [exclusive] do not match the server.',
             $exception->getMessage()
         );
 

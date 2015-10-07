@@ -1,8 +1,6 @@
 <?php
 namespace Recoil\Amqp;
 
-use Icecave\Flip\OptionSet;
-
 /**
  * An AMQP queue.
  *
@@ -19,37 +17,11 @@ interface Queue
     public function name();
 
     /**
-     * Get the options used when the queue was declared.
+     * Get the queue options.
      *
-     * @return OptionSet The queue options.
+     * @return QueueOptions The queue options.
      */
     public function options();
-
-    /**
-     * Bind this queue to an exchange.
-     *
-     * @param Exchange $exchange   The exchange.
-     * @param string   $routingKey The routing key for DIRECT and TOPIC exchanges, or empty string for FANOUT and HEADERS exchanges.
-     *
-     * Via promise:
-     * @return null
-     * @throws ConnectionException      if not connected to the AMQP server.
-     * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
-     */
-    public function bind(Exchange $exchange, $routingKey = '');
-
-    /**
-     * Unbind this queue from an exchange.
-     *
-     * @param Exchange $exchange   The exchange.
-     * @param string   $routingKey The routing key for DIRECT and TOPIC exchanges, or empty string for FANOUT and HEADERS exchanges.
-     *
-     * Via promise:
-     * @return null
-     * @throws ConnectionException      if not connected to the AMQP server.
-     * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
-     */
-    public function unbind(Exchange $exchange, $routingKey = '');
 
     /**
      * Publish a message to this queue.
@@ -57,30 +29,28 @@ interface Queue
      * This is a convenience method equivalent to publishing to the pre-declared,
      * nameless, direct exchange with a routing key equal to the queue name.
      *
-     * @param Message $message The message to publish.
-     * @param mixed   $options Publish options.
+     * @param Message             $message The message to publish.
+     * @param PublishOptions|null $options Options that affect the publish operation, or null to use the defaults.
      *
-     * @see PublishOption
-     *
-     * Via promise:
-     * @return null
      * @throws ConnectionException      if not connected to the AMQP server.
      * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
      */
-    public function publish(Message $message, $options = []);
+    public function publish(
+        Message $message,
+        PublishOptions $options = null
+    );
 
     /**
      * Consume messages from this queue.
      *
-     * Invokes a callback when a message is received from this queue.
+     * Invokes a callback with a DeliveredMessage instance when a message
+     * arrives.
      *
-     * The callback signature is $callback(ConsumerMessage $message).
+     * @see DeliveredMessage
      *
-     * @param callable $callback The callback to invoke when a message is received.
-     * @param mixed    $options  Consumer options.
-     * @param string   $tag      A unique identifier for the consumer, or an empty string to have the server generate the consumer tag.
-     *
-     * @see ConsumerOption
+     * @param callable             $callback The callback to invoke when a message is received.
+     * @param ConsumerOptions|null $options  Options that affect the behavior of the consumer, or null to use the defaults.
+     * @param string               $tag      A unique identifier for the consumer, or an empty string use a random, unique tag.
      *
      * Via promise:
      * @return Consumer
@@ -88,13 +58,44 @@ interface Queue
      * @throws ResourceNotFoundException if the queue does not exist on the server.
      * @throws ConnectionException       if not connected to the AMQP server.
      */
-    public function consume(callable $callback, $options = [], $tag = '');
+    public function consume(
+        callable $callback,
+        ConsumerOptions $options = null,
+        $tag = ''
+    );
 
     /**
      * Delete this queue.
      *
      * Via promise:
+     * @return null                on success.
      * @throws ConnectionException if not connected to the AMQP server.
      */
     public function delete();
+
+    /**
+     * Bind this queue to an exchange.
+     *
+     * @param Exchange $source     The exchange to bind to.
+     * @param string   $routingKey The routing key for DIRECT and TOPIC exchanges, or empty string for FANOUT and HEADERS exchanges.
+     *
+     * Via promise:
+     * @return null                     on success.
+     * @throws ConnectionException      if not connected to the AMQP server.
+     * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
+     */
+    public function bind(Exchange $source, $routingKey = '');
+
+    /**
+     * Unbind this queue from an exchange.
+     *
+     * @param Exchange $source     The exchange to unbind from.
+     * @param string   $routingKey The routing key for DIRECT and TOPIC exchanges, or empty string for FANOUT and HEADERS exchanges.
+     *
+     * Via promise:
+     * @return null                     on success.
+     * @throws ConnectionException      if not connected to the AMQP server.
+     * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
+     */
+    public function unbind(Exchange $source, $routingKey = '');
 }

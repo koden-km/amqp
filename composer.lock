@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "069e134bb5bfed9475f4d314ddb96fd6",
+    "hash": "1135a667e1c0c8548d39a3425b811fe2",
     "packages": [
         {
             "name": "eloquent/enumeration",
@@ -61,21 +61,18 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/IcecaveStudios/flip.git",
-                "reference": "42d5394912d69aafc0266ce2030938cae8dd5019"
+                "reference": "6b01059c4660295283003a97ab4174c68feb0c87"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/IcecaveStudios/flip/zipball/42d5394912d69aafc0266ce2030938cae8dd5019",
-                "reference": "42d5394912d69aafc0266ce2030938cae8dd5019",
+                "url": "https://api.github.com/repos/IcecaveStudios/flip/zipball/6b01059c4660295283003a97ab4174c68feb0c87",
+                "reference": "6b01059c4660295283003a97ab4174c68feb0c87",
                 "shasum": ""
             },
             "require": {
-                "eloquent/enumeration": "^5",
-                "icecave/isolator": "~2",
-                "php": ">=5.6"
+                "php": ">=5.5"
             },
             "require-dev": {
-                "eloquent/phony": "^0.3",
                 "icecave/archer": "~1"
             },
             "type": "library",
@@ -100,15 +97,18 @@
                     "homepage": "https://github.com/jmalloc"
                 }
             ],
-            "description": "Simple, strict, explicit boolean options.",
+            "description": "A tiny library for working with strict sets of boolean values.",
             "homepage": "https://github.com/IcecaveStudios/flip",
             "keywords": [
                 "bit",
                 "boolean",
+                "enum",
+                "field",
                 "flag",
-                "option"
+                "option",
+                "set"
             ],
-            "time": "2015-10-07 08:38:16"
+            "time": "2015-10-07 13:44:15"
         },
         {
             "name": "icecave/isolator",

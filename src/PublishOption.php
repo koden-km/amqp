@@ -1,20 +1,22 @@
 <?php
 namespace Recoil\Amqp;
 
-use Icecave\Flip\AbstractOption;
+use Icecave\Flip\OptionSetTrait;
 
 /**
- * Options used to configure the behaviour of message publishing.
+ * Options used to configure the behavior of message publishing.
  */
-final class PublishOption extends AbstractOption
+final class PublishOption
 {
+    use OptionSetTrait;
+
     /**
      * Fail if the server is unable to route the message to any queues.
      *
      * If this option is OFF, messages that are not routed to any queues are
      * silently dropped.
      */
-    const MANDATORY = 'mandatory';
+    private $mandatory = false;
 
     /**
      * Only place a message on a queue if there are currently ready consumers
@@ -23,5 +25,5 @@ final class PublishOption extends AbstractOption
      * @deprecated This feature is no longer supported by Rabbit MQ.
      * @link http://www.rabbitmq.com/blog/2012/11/19/breaking-things-with-rabbitmq-3-0/
      */
-    const IMMEDIATE = 'immediate';
+    private $immediate = false;
 }

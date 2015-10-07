@@ -12,7 +12,7 @@ final class ResourceLockedException extends RuntimeException
 {
     /**
      * A queue could not be declared because another connection has already
-     * declared it using QueueOption::EXCLUSIVE().
+     * declared it as exclusive.
      *
      * @param string         $name     The name of the queue.
      * @param Exception|null $previous The exception that caused this exception, if any.
@@ -30,7 +30,7 @@ final class ResourceLockedException extends RuntimeException
 
     /**
      * A consumer could not be started because another connection is already
-     * consuming from the same queue with ConsumerOption::EXCLUSIVE().
+     * consuming from the same queue with an exclusive consumer.
      *
      * @param string         $name     The name of the queue.
      * @param Exception|null $previous The exception that caused this exception, if any.
