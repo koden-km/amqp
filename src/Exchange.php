@@ -42,6 +42,7 @@ interface Exchange
      * @param Message             $message    The message to publish.
      * @param string              $routingKey The routing key for DIRECT and TOPIC exchanges, or empty string for FANOUT and HEADERS exchanges.
      * @param PublishOptions|null $options    Options that affect the publish operation, or null to use the defaults.
+     * @param Channel|null        $channel    The channel to use, or null to use an automatically managed channel.
      *
      * @throws ConnectionException      if not connected to the AMQP server.
      * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
@@ -49,7 +50,8 @@ interface Exchange
     public function publish(
         Message $message,
         $routingKey = '',
-        PublishOptions $options = null
+        PublishOptions $options = null,
+        Channel $channel = null
     );
 
     /**

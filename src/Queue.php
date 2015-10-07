@@ -31,13 +31,15 @@ interface Queue
      *
      * @param Message             $message The message to publish.
      * @param PublishOptions|null $options Options that affect the publish operation, or null to use the defaults.
+     * @param Channel|null        $channel The channel to use, or null to use an automatically managed channel.
      *
      * @throws ConnectionException      if not connected to the AMQP server.
      * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
      */
     public function publish(
         Message $message,
-        PublishOptions $options = null
+        PublishOptions $options = null,
+        Channel $channel = null
     );
 
     /**
@@ -51,6 +53,7 @@ interface Queue
      * @param callable             $callback The callback to invoke when a message is received.
      * @param ConsumerOptions|null $options  Options that affect the behavior of the consumer, or null to use the defaults.
      * @param string               $tag      A unique identifier for the consumer, or an empty string use a random, unique tag.
+     * @param Channel|null         $channel  The channel to use, or null to use an automatically managed channel.
      *
      * Via promise:
      * @return Consumer
@@ -61,7 +64,8 @@ interface Queue
     public function consume(
         callable $callback,
         ConsumerOptions $options = null,
-        $tag = ''
+        $tag = '',
+        Channel $channel = null
     );
 
     /**
