@@ -35,19 +35,17 @@ interface Exchange
     /**
      * Publish a message to this exchange.
      *
-     * @param Message                   $message    The message to publish.
-     * @param string                    $routingKey The routing key for DIRECT and TOPIC exchanges, or empty string for FANOUT and HEADERS exchanges.
-     * @param array<PublishOption>|null $options    An array of options to set, or null to use the defaults.
+     * @param Message $message    The message to publish.
+     * @param string  $routingKey The routing key for DIRECT and TOPIC exchanges, or empty string for FANOUT and HEADERS exchanges.
+     * @param mixed   $options    Publish options.
+     *
+     * @see PublishOption
      *
      * Via promise:
      * @throws ConnectionException      if not connected to the AMQP server.
      * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
      */
-    public function publish(
-        Message $message,
-        $routingKey = '',
-        array $options = null
-    );
+    public function publish(Message $message, $routingKey = '', $options = null);
 
     /**
      * Delete this exchange.

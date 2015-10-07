@@ -52,19 +52,22 @@ interface Queue
     public function unbind(Exchange $exchange, $routingKey = '');
 
     /**
-     * Publish a message directly to this queue.
+     * Publish a message to this queue.
      *
      * This is a convenience method equivalent to publishing to the pre-declared,
      * nameless, direct exchange with a routing key equal to the queue name.
      *
-     * @param Message                   $message The message to publish.
-     * @param array<PublishOption>|null $options An array of options to set, or null to use the defaults.
+     * @param Message $message The message to publish.
+     * @param mixed   $options Publish options.
+     *
+     * @see PublishOption
      *
      * Via promise:
      * @return null
-     * @throws ConnectionException if not connected to the AMQP server.
+     * @throws ConnectionException      if not connected to the AMQP server.
+     * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
      */
-    public function publish(Message $message, array $options = null);
+    public function publish(Message $message, $options = []);
 
     /**
      * Consume messages from this queue.
