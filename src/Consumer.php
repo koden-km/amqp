@@ -38,7 +38,7 @@ interface Consumer
      * Stop consuming messages.
      *
      * Via promise:
-     * @return null on success.
+     * @return null                on success.
      * @throws ConnectionException if not connected to the AMQP server.
      */
     public function cancel();
