@@ -7,13 +7,8 @@ use Recoil\Amqp\CodeGen\GeneratorEngine;
 Eloquent\Asplode\Asplode::install();
 
 $engine = new GeneratorEngine(
-    __DIR__ . '/amqp-rabbitmq-0.9.1.json',
+    __DIR__ . '/../res/amqp-rabbitmq-0.9.1.json',
     __DIR__ . '/../src-generated'
 );
-
-$files = glob(__DIR__ . '/generators/*.php');
-foreach ($files as $file) {
-    $engine->add(require $file);
-}
 
 $engine->generate();

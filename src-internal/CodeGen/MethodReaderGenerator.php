@@ -1,8 +1,9 @@
 <?php
-use Recoil\Amqp\CodeGen\Generator;
-use Recoil\Amqp\CodeGen\GeneratorEngine;
-use Recoil\Amqp\CodeGen\GeneratorHelperTrait;
+namespace Recoil\Amqp\CodeGen;
 
+/**
+ * @codeCoverageIgnore
+ */
 final class MethodReaderGenerator implements Generator
 {
     use GeneratorHelperTrait;
@@ -29,7 +30,6 @@ final class MethodReaderGenerator implements Generator
             yield;
 
             foreach ($class->methods as $method) {
-
                 // Skip client->server only messages (as this is only the reader) ...
                 if (isset($method->direction) && 'CS' === $method->direction) {
                     continue;
@@ -170,5 +170,3 @@ final class MethodReaderGenerator implements Generator
     private $bitArgs;
     private $fixedArgs;
 }
-
-return new MethodReaderGenerator;

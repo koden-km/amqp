@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\CodeGen;
 
 use LogicException;
-use Traversable;
 
 /**
  * @codeCoverageIgnore
@@ -13,12 +12,12 @@ final class GeneratorEngine
     {
         $this->spec = json_decode(file_get_contents($spec));
         $this->path = rtrim($path, '/');
-        $this->generators = [];
-    }
 
-    public function add(Generator $generator)
-    {
-        $this->generators[] = $generator;
+        $this->generators = [
+            new ConstantsGenerator(),
+            new MethodEntityGenerator(),
+            new MethodReaderGenerator(),
+        ];
     }
 
     public function generate()

@@ -1,6 +1,9 @@
 <?php
 namespace Recoil\Amqp\CodeGen;
 
+/**
+ * @codeCoverageIgnore
+ */
 trait GeneratorHelperTrait
 {
     /**

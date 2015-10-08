@@ -1,8 +1,9 @@
 <?php
-use Recoil\Amqp\CodeGen\Generator;
-use Recoil\Amqp\CodeGen\GeneratorEngine;
-use Recoil\Amqp\CodeGen\GeneratorHelperTrait;
+namespace Recoil\Amqp\CodeGen;
 
+/**
+ * @codeCoverageIgnore
+ */
 final class MethodEntityGenerator implements Generator
 {
     use GeneratorHelperTrait;
@@ -39,8 +40,5 @@ final class MethodEntityGenerator implements Generator
         }
 
         yield '}';
-
     }
 }
-
-return new MethodEntityGenerator;

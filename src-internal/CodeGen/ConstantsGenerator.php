@@ -1,7 +1,9 @@
 <?php
-use Recoil\Amqp\CodeGen\Generator;
-use Recoil\Amqp\CodeGen\GeneratorEngine;
+namespace Recoil\Amqp\CodeGen;
 
+/**
+ * @codeCoverageIgnore
+ */
 final class ConstantsGenerator implements Generator
 {
     public function generate(GeneratorEngine $engine, $spec)
@@ -37,7 +39,6 @@ final class ConstantsGenerator implements Generator
         }
 
         yield '}';
-
     }
 
     /**
@@ -67,5 +68,3 @@ final class ConstantsGenerator implements Generator
         return $length;
     }
 }
-
-return new ConstantsGenerator;
