@@ -8,25 +8,31 @@ final class FrameReader
         $this->buffer .= $buffer;
 
         while (strlen($this->buffer) >= $this->waitLength) {
-            if (null === $this->type) {
-                $values = unpack('Ctype/nchannel/Nsize', $this->buffer);
-                $this->buffer = substr($this->buffer, self::HEADER_SIZE) ?: '';
+            if (self::HEADER_SIZE === $this->waitLength) {
+                $length = substr(
+                    $this->buffer,
+                    self::HEADER_TYPE_SIZE + self::HEADER_CHANNEL_SIZE,
+                    self::HEADER_LENGTH_SIZE
+                );
 
-                $this->waitLength = $values['size'] + 1;
-                $this->type = $values['type'];
-                $this->channel = $values['channel'];
-            } elseif (self::FRAME_END === $this->buffer[$this->waitLength - 1]) {
+                list(, $length) = unpack('N', $length);
+                $this->waitLength = self::HEADER_SIZE + $length + self::END_SIZE;
+            } elseif (self::END_VALUE === $this->buffer[$this->waitLength - 1]) {
+                $values = unpack('Ctype/nchannel', $this->buffer);
+
                 $frame = new Frame(
-                    $this->type,
-                    $this->channel,
-                    substr($this->buffer, 0, $this->waitLength - 1)
+                    $values['type'],
+                    $values['channel'],
+                    substr(
+                        $this->buffer,
+                        self::HEADER_SIZE,
+                        $this->waitLength - self::HEADER_SIZE - self::END_SIZE
+                    )
                 );
 
                 self::dump($frame);
-
                 yield $frame;
 
-                $this->type = null;
                 $this->buffer = substr($this->buffer, $this->waitLength) ?: '';
                 $this->waitLength = self::HEADER_SIZE;
             } else {
@@ -89,11 +95,16 @@ final class FrameReader
         return $output;
     }
 
-    const HEADER_SIZE = 7; // 1-byte size + 2-byte channel + 4-byte size
-    const FRAME_END = "\xce";
+    const HEADER_TYPE_SIZE = 1;
+    const HEADER_CHANNEL_SIZE = 2;
+    const HEADER_LENGTH_SIZE = 4;
+    const HEADER_SIZE = self::HEADER_TYPE_SIZE
+                      + self::HEADER_CHANNEL_SIZE
+                      + self::HEADER_LENGTH_SIZE;
+
+    const END_SIZE = 1;
+    const END_VALUE = "\xce";
 
     private $buffer = '';
     private $waitLength = self::HEADER_SIZE;
-    private $type;
-    private $channel;
 }
