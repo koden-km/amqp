@@ -15,8 +15,10 @@ final class GeneratorEngine
 
         $this->generators = [
             new ConstantsGenerator(),
+            new FrameVisitorInterfaceGenerator(),
             new MethodFrameGenerator(),
-            new MethodReaderTraitGenerator(),
+            new MethodParserTraitGenerator(),
+            new MethodSerializerTraitGenerator(),
         ];
     }
 
@@ -122,7 +124,7 @@ final class GeneratorEngine
         throw new LogicException('Not a fixed-length type: ' . $type . '.');
     }
 
-    public function unpackFormat($type, $name = '')
+    public function packFormat($type, $name = '')
     {
         static $formats = [
             'octet'     => 'c',

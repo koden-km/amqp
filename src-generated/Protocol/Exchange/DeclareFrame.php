@@ -1,10 +1,12 @@
 <?php
 namespace Recoil\Amqp\Protocol\Exchange;
 
-use Recoil\Amqp\Protocol\Frame;
+use Recoil\Amqp\Protocol\OutgoingFrame;
+use Recoil\Amqp\Protocol\OutgoingFrameVisitor;
 
-final class DeclareFrame extends Frame
+final class DeclareFrame implements OutgoingFrame
 {
+    public $channel;
     public $reserved; // short
     public $exchange; // shortstr
     public $type; // shortstr
@@ -14,4 +16,9 @@ final class DeclareFrame extends Frame
     public $internal; // bit
     public $nowait; // bit
     public $arguments; // table
+
+    public function acceptOutgoingFrameVisitor(OutgoingFrameVisitor $visitor)
+    {
+        return $visitor->visitExchangeDeclareFrame($this);
+    }
 }

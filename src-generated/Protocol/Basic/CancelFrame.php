@@ -1,10 +1,17 @@
 <?php
 namespace Recoil\Amqp\Protocol\Basic;
 
-use Recoil\Amqp\Protocol\Frame;
+use Recoil\Amqp\Protocol\OutgoingFrame;
+use Recoil\Amqp\Protocol\OutgoingFrameVisitor;
 
-final class CancelFrame extends Frame
+final class CancelFrame implements OutgoingFrame
 {
+    public $channel;
     public $consumerTag; // shortstr
     public $nowait; // bit
+
+    public function acceptOutgoingFrameVisitor(OutgoingFrameVisitor $visitor)
+    {
+        return $visitor->visitBasicCancelFrame($this);
+    }
 }

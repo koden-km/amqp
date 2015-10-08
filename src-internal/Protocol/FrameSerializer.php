@@ -3,46 +3,84 @@ namespace Recoil\Amqp\Protocol;
 
 use RuntimeException;
 
-trait TableReaderTrait
+final class FrameSerializer implements OutgoingFrameVisitor
 {
-    private function readTable()
+    /**
+     * Serialize a frame, for transmission to the server.
+     *
+     * @param OutgoingFrame $frame The frame to serialize.
+     *
+     * @return string The binary serialized frame.
+     */
+    public function serialize(OutgoingFrame $frame)
     {
-        $length = $this->readUnsignedInt32();
-        $stopAt = strlen($this->buffer) - $length;
-
-        $table = [];
-
-        while (strlen($this->buffer) > $stopAt) {
-            $key = $this->readShortString();
-            $type = $this->buffer[0];
-            $this->buffer = substr($this->buffer, 1);
-
-            $table[$key] = $this->readTableValue($type);
-        }
-
-        return $table;
+        return $frame->acceptOutgoingFrameVisitor($this);
     }
 
-    private function readTableValue($type)
+    public function serializeShortString($value)
+    {
+        return chr(strlen($value)) . $value;
+    }
+
+    public function serializeLongString($value)
+    {
+        return pack("N", strlen($value)) . $value;
+    }
+
+    public function serializeCredentials($username, $password)
+    {
+        return $this->serializeShortString('LOGIN')
+             . 'S' . $this->serializeLongString($username)
+             . $this->serializeShortString('PASSWORD')
+             . 'S' . $this->serializeLongString($password);
+    }
+
+    public function serializeTable(array $table)
+    {
+        $buffer = '';
+
+        foreach ($table as $key => $value) {
+            $buffer .= $this->serializeShortString($key);
+
+            if (is_string($value)) {
+                // if (strlen($value) <= 0xff) {
+                //     $buffer .= 's' . $this->serializeShortString($value);
+                // } else {
+                    $buffer .= 'S' . $this->serializeLongString($value);
+                // }
+            }
+
+            // if (is_bool($value)) {
+            //     $buffer .= 't' . ord($value);
+            // } elseif (is_float($value)) {
+            //     $buffer .= 'd' .
+            // }
+            // } elseif (is_int($value)
+        }
+
+        return $this->serializeLongString($buffer);
+    }
+
+    private function parseTableValue($type)
     {
         switch ($type) {
-            case "t": return $this->readUnsignedInt8() !== 0;
-            case "b": return $this->readSignedInt8();
-            case "B": return $this->readUnsignedInt8();
-            case "U": return $this->readSignedInt16();
-            case "u": return $this->readUnsignedInt16();
-            case "I": return $this->readSignedInt32();
-            case "i": return $this->readUnsignedInt32();
-            case "L": return $this->readSignedInt64();
-            case "l": return $this->readUnsignedInt64();
-            case "f": return $this->readFloat();
-            case "d": return $this->readDouble();
-            case "D": return $this->readDecimal();
-            case "s": return $this->readShortString();
-            case "S": return $this->readLongString();
-            case "A": return $this->readArray();
-            case "T": return $this->readUnsignedInt64();
-            case "F": return $this->readTable();
+            case "t": return $this->parseUnsignedInt8() !== 0;
+            case "b": return $this->parseSignedInt8();
+            case "B": return $this->parseUnsignedInt8();
+            case "U": return $this->parseSignedInt16();
+            case "u": return $this->parseUnsignedInt16();
+            case "I": return $this->parseSignedInt32();
+            case "i": return $this->parseUnsignedInt32();
+            case "L": return $this->parseSignedInt64();
+            case "l": return $this->parseUnsignedInt64();
+            case "f": return $this->parseFloat();
+            case "d": return $this->parseDouble();
+            case "D": return $this->parseDecimal();
+            case "s": return $this->parseShortString();
+            case "S": return $this->parseLongString();
+            case "A": return $this->parseArray();
+            case "T": return $this->parseUnsignedInt64();
+            case "F": return $this->parseTable();
             case "V": return null;
         }
 
@@ -55,7 +93,7 @@ trait TableReaderTrait
      *
      * @return integer
      */
-    private function readSignedInt8()
+    private function parseSignedInt8()
     {
         try {
             $result = ord($this->buffer);
@@ -75,7 +113,7 @@ trait TableReaderTrait
      *
      * @return integer
      */
-    private function readUnsignedInt8()
+    private function parseUnsignedInt8()
     {
         try {
             return ord($this->buffer);
@@ -89,7 +127,7 @@ trait TableReaderTrait
      *
      * @return integer
      */
-    private function readSignedInt16()
+    private function parseSignedInt16()
     {
         try {
             $result = unpack('n', $this->buffer)[1];
@@ -109,7 +147,7 @@ trait TableReaderTrait
      *
      * @return integer
      */
-    private function readUnsignedInt16()
+    private function parseUnsignedInt16()
     {
         try {
             return unpack('n', $this->buffer)[1];
@@ -123,7 +161,7 @@ trait TableReaderTrait
      *
      * @return integer
      */
-    private function readSignedInt32()
+    private function parseSignedInt32()
     {
         try {
             $result = unpack('N', $this->buffer)[1];
@@ -143,7 +181,7 @@ trait TableReaderTrait
      *
      * @return integer
      */
-    private function readUnsignedInt32()
+    private function parseUnsignedInt32()
     {
         try {
             return unpack('N', $this->buffer)[1];
@@ -157,7 +195,7 @@ trait TableReaderTrait
      *
      * @return integer
      */
-    private function readSignedInt64()
+    private function parseSignedInt64()
     {
         try {
             // 'J' is documented as unsigned, but because PHP only has a signed
@@ -173,7 +211,7 @@ trait TableReaderTrait
      *
      * @return integer|string A string is returned when the value is is outside the range of PHP's signed integer type.
      */
-    private function readUnsignedInt64()
+    private function parseUnsignedInt64()
     {
         try {
             $result = unpack('J', $this->buffer)[1];
@@ -187,4 +225,8 @@ trait TableReaderTrait
             $this->buffer = substr($this->buffer, 8);
         }
     }
+
+    use MethodSerializerTrait;
+    // use ContentSerializerTrait;
+    // use HeartbatSerializerTrait;
 }

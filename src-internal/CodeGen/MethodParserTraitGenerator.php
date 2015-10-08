@@ -4,7 +4,7 @@ namespace Recoil\Amqp\CodeGen;
 /**
  * @codeCoverageIgnore
  */
-final class MethodReaderTraitGenerator implements Generator
+final class MethodParserTraitGenerator implements Generator
 {
     use GeneratorHelperTrait;
 
@@ -12,7 +12,7 @@ final class MethodReaderTraitGenerator implements Generator
     {
         $this->engine = $engine;
 
-        yield 'Protocol/MethodReaderTrait.php' => $this->generateCode($spec->classes);
+        yield 'Protocol/MethodParserTrait.php' => $this->generateCode($spec->classes);
     }
 
     private function generateCode(array $classes)
@@ -20,9 +20,9 @@ final class MethodReaderTraitGenerator implements Generator
         yield '<?php';
         yield 'namespace Recoil\Amqp\Protocol;';
         yield;
-        yield 'trait MethodReaderTrait';
+        yield 'trait MethodParserTrait';
         yield '{';
-        yield '    private function readMethodFrame($channel)';
+        yield '    private function parseMethodFrame()';
         yield '    {';
         yield '        list($class, $method) = array_values(unpack("n_1/n_2", $this->buffer));';
         yield '        ' . $this->advanceBuffer(4);
@@ -35,22 +35,18 @@ final class MethodReaderTraitGenerator implements Generator
             yield '                switch ($method) {';
 
             foreach ($class->methods as $method) {
-                yield '                    case ' . $method->id . ': return $this->read' . $this->toBumpyCase($class->name, $method->name) . 'Frame();';
+                yield '                    case ' . $method->id . ': return $this->parse' . $this->toBumpyCase($class->name, $method->name) . 'Frame();';
             }
 
-            yield '                    default:';
-            yield '                        throw new RuntimeException(';
-            yield '                            ' . var_export('AMQP class "' . $class->name . '" does not have a method with ID ', true) . ' . $method . \'.\'';
-            yield '                        );';
             yield '                }';
+            yield;
+            yield '                throw new RuntimeException("Unknown AMQP method ID: " . $method . " in " . ' . var_export($class->name, true) . ' . " class.");';
             yield;
         }
 
-        yield '            default:';
-        yield '                throw new RuntimeException(';
-        yield '                    ' . var_export('AMQP class "' . $class->name . '" does not have a method with ID ', true) . ' . $method . \'.\'';
-        yield '                );';
         yield '        }';
+        yield;
+        yield '        throw new RuntimeException("Unknown AMQP class ID: " . $class . ".");';
         yield '    }';
 
         foreach ($classes as $class) {
@@ -63,7 +59,7 @@ final class MethodReaderTraitGenerator implements Generator
                 $entityClass = $this->toBumpyCase($class->name) . '\\' . $this->toBumpyCase($method->name) . 'Frame';
 
                 yield;
-                yield '    private function read' . $this->toBumpyCase($class->name, $method->name) . 'Frame()';
+                yield '    private function parse' . $this->toBumpyCase($class->name, $method->name) . 'Frame()';
                 yield '    {';
 
                 if ($method->arguments) {
@@ -108,11 +104,11 @@ final class MethodReaderTraitGenerator implements Generator
             yield '        // consume "' . $argument->name . '" (' . $type . ')';
 
             if ($type === 'shortstr') {
-                yield '        $frame->' . $this->toCamelCase($argument->name) . ' = $this->readShortString();';
+                yield '        $frame->' . $this->toCamelCase($argument->name) . ' = $this->parseShortString();';
             } elseif ($type === 'longstr') {
-                yield '        $frame->' . $this->toCamelCase($argument->name) . ' = $this->readLongString();';
+                yield '        $frame->' . $this->toCamelCase($argument->name) . ' = $this->parseLongString();';
             } elseif ($type === 'table') {
-                yield '        $frame->' . $this->toCamelCase($argument->name) . ' = $this->readTable();';
+                yield '        $frame->' . $this->toCamelCase($argument->name) . ' = $this->parseTable();';
             } else {
                 throw new RuntimeException('Unknown type: ' . $type . '.');
             }
@@ -164,7 +160,7 @@ final class MethodReaderTraitGenerator implements Generator
             $argument = $arguments[0];
             $type     = $this->engine->resolveArgumentType($argument);
             $size     = $this->engine->sizeInBytes($type);
-            $format   = $this->engine->unpackFormat($type);
+            $format   = $this->engine->packFormat($type);
             $name     = $this->toCamelCase($argument->name);
 
             yield;
@@ -183,7 +179,7 @@ final class MethodReaderTraitGenerator implements Generator
                 $type = $this->engine->resolveArgumentType($argument);
                 $size += $this->engine->sizeInBytes($type);
                 $names[] = $this->toCamelCase($argument->name);
-                $format[] = $this->engine->unpackFormat($type, '_' . count($format));
+                $format[] = $this->engine->packFormat($type, '_' . count($format));
 
                 yield '        // consume "' . $argument->name . '" (' . $type . ')';
             }
