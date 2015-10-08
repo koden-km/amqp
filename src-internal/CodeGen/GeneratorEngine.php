@@ -15,8 +15,8 @@ final class GeneratorEngine
 
         $this->generators = [
             new ConstantsGenerator(),
-            new MethodEntityGenerator(),
-            new MethodReaderGenerator(),
+            new MethodFrameGenerator(),
+            new MethodReaderTraitGenerator(),
         ];
     }
 
@@ -24,10 +24,13 @@ final class GeneratorEngine
     {
         $this->delete($this->path);
 
+        echo 'Generating files: ' . PHP_EOL;
+
         foreach ($this->generators as $generator) {
             $files = $generator->generate($this, $this->spec);
 
             foreach ($files as $name => $content) {
+                echo ' * ' . $name . ' .';
                 $name = $this->path . '/' . $name;
 
                 @mkdir(
@@ -39,12 +42,16 @@ final class GeneratorEngine
                 $fp = fopen($name, 'w');
                 $this->write($fp, $content);
                 fclose($fp);
+
+                echo PHP_EOL;
             }
         }
     }
 
     private function write($fp, $data)
     {
+        echo '.';
+
         if (is_string($data)) {
             fwrite($fp, $data . PHP_EOL);
         } elseif (null === $data) {
@@ -67,6 +74,7 @@ final class GeneratorEngine
 
             if (is_dir($p)) {
                 $this->delete($p);
+                rmdir($p);
             } else {
                 unlink($p);
             }

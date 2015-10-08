@@ -8,13 +8,13 @@ final class ConstantsGenerator implements Generator
 {
     public function generate(GeneratorEngine $engine, $spec)
     {
-        yield 'Transport/AmqpConstants.php' => $this->generateCode($spec->constants);
+        yield 'Protocol/AmqpConstants.php' => $this->generateCode($spec->constants);
     }
 
     private function generateCode(array $constants)
     {
         yield '<?php';
-        yield 'namespace Recoil\Amqp\Transport;';
+        yield 'namespace Recoil\Amqp\Protocol;';
         yield;
         yield 'use Eloquent\Enumeration\AbstractEnumeration;';
         yield;

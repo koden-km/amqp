@@ -4,7 +4,7 @@ namespace Recoil\Amqp;
 use Icecave\Isolator\IsolatorTrait;
 use React\EventLoop\LoopInterface;
 use React\Socket\Connection as SocketConnection;
-use Recoil\Amqp\Transport\FrameReader;
+use Recoil\Amqp\Protocol\FrameReader;
 
 /**
  * A connection to an AMQP server that uses React's event loop.
@@ -17,6 +17,7 @@ final class ReactConnection implements Connection
     ) {
         $this->loop = $loop;
         $this->options = $options;
+        $this->reader = new FrameReader();
     }
 
     /**
@@ -88,8 +89,6 @@ final class ReactConnection implements Connection
             }
         );
 
-        $this->frameReader = new FrameReader();
-
         $this->stream->write("AMQP\x00\x00\x09\x01");
     }
 
@@ -116,7 +115,10 @@ final class ReactConnection implements Connection
 
     private function onData($buffer)
     {
-        foreach ($this->frameReader->feed($buffer) as $frame) {
+        $this->reader->append($buffer);
+
+        while ($frame = $this->reader->readFrame()) {
+            print_r($frame);
         }
     }
 
@@ -140,5 +142,5 @@ final class ReactConnection implements Connection
     private $loop;
     private $options;
     private $stream;
-    private $frameReader;
+    private $reader;
 }

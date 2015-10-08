@@ -48,6 +48,6 @@ trait GeneratorHelperTrait
 
     public function advanceBuffer($expr)
     {
-        return '$this->buffer = substr($this->buffer, ' . $expr . ') ?: "";';
+        return '$this->buffer = substr($this->buffer, ' . $expr . ');';
     }
 }
