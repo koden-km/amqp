@@ -119,7 +119,7 @@ final class MethodParserGenerator implements CodeGenerator
             } elseif ($type === 'longstr') {
                 yield '                $frame->' . $this->toCamelCase($argument->name) . ' = $this->parseLongString();';
             } elseif ($type === 'table') {
-                yield '                $frame->' . $this->toCamelCase($argument->name) . ' = $this->parseTable();';
+                yield '                $frame->' . $this->toCamelCase($argument->name) . ' = $this->parseFieldTable();';
             } else {
                 throw new RuntimeException('Unknown type: ' . $type . '.');
             }

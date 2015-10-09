@@ -23,7 +23,7 @@ trait FrameParserMethodTrait
                 $frame->versionMinor = $fields["b"];
 
                 // consume "server-properties" (table)
-                $frame->serverProperties = $this->parseTable();
+                $frame->serverProperties = $this->parseFieldTable();
 
                 // consume "mechanisms" (longstr)
                 $frame->mechanisms = $this->parseLongString();

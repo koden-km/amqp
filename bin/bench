@@ -200,27 +200,46 @@ function bench($description, $iterations, callable $work, ...$arguments)
 //     ),
 // ];
 
+// $results = [
+//     bench(
+//         'multi substr',
+//         $iterations,
+//         function ($buffer) {
+//             for ($i = 0; $i < 1; ++$i) {
+//                 $o = ord($buffer);
+//                 $buffer = substr($buffer, 1);
+//             }
+//         },
+//         $buffer
+//     ),
+//     bench(
+//         'single substr',
+//         $iterations,
+//         function ($buffer) {
+//             $counter = 0;
+//             for ($i = 0; $i < 1; ++$i) {
+//                 $o = ord($buffer[$counter++]);
+//             }
+//             $buffer = substr($buffer, $counter);
+//         },
+//         $buffer
+//     ),
+// ];
+
 $results = [
     bench(
-        'multi substr',
+        'strrev',
         $iterations,
         function ($buffer) {
-            for ($i = 0; $i < 1; ++$i) {
-                $o = ord($buffer);
-                $buffer = substr($buffer, 1);
-            }
+            $b = unpack('f', strrev(substr($buffer, 0, 4)));
         },
         $buffer
     ),
     bench(
-        'single substr',
+        'reverse indexing',
         $iterations,
         function ($buffer) {
-            $counter = 0;
-            for ($i = 0; $i < 1; ++$i) {
-                $o = ord($buffer[$counter++]);
-            }
-            $buffer = substr($buffer, $counter);
+            $x = unpack('f', $buffer[3] . $buffer[2] . $buffer[1] . $buffer[0]);
         },
         $buffer
     ),

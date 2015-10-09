@@ -1,7 +1,6 @@
 <?php
 namespace Recoil\Amqp\CodeGen;
 
-
 /**
  * Generates AMQP code from specification (used in parser, serializer, etc).
  */

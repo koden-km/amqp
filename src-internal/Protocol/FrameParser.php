@@ -1,7 +1,6 @@
 <?php
 namespace Recoil\Amqp\Protocol;
 
-
 /**
  * Produces Frame objects from binary data.
  */
