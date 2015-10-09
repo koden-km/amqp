@@ -10,6 +10,7 @@ $finder = Symfony\CS\Finder\DefaultFinder::create()
             'build',
             'node_modules',
             'src-web',
+            'src-generated',
             'vendor',
         )
     );

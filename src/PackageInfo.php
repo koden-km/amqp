@@ -1,6 +1,6 @@
 <?php
 
-namespace Recoil\AMQP;
+namespace Recoil\Amqp;
 
 class PackageInfo
 {

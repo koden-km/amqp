@@ -1,0 +1,266 @@
+#!/usr/bin/env php
+<?php
+
+use Recoil\Amqp\Protocol\Constants;
+require __DIR__ . '/../vendor/autoload.php';
+
+$buffer = "\x01\x02\x03\x04";
+$iterations = 200000;
+
+function bench($description, $iterations, callable $work, ...$arguments)
+{
+    echo 'Running "' . $description . '" ... ';
+    $start = microtime(true);
+
+    while ($iterations--) {
+        $work(...$arguments);
+    }
+
+    echo 'Done' . PHP_EOL;
+
+    return [$description, microtime(true) - $start];
+}
+
+// $results = [
+//     bench(
+//         'list + array_values',
+//         $iterations,
+//         function ($buffer) {
+//             list($a, $b) = array_values(unpack("Ca/nb", $buffer));
+//             $buffer = substr($buffer, 3);
+
+//             assert('$a == 1');
+//             assert('$b == 515');
+//         },
+//         $buffer
+//     ),
+//     bench(
+//         'temp + array access',
+//         $iterations,
+//         function ($buffer) {
+//             $temp = unpack("Ca/nb", $buffer);
+//             $buffer = substr($buffer, 3);
+//             $a = $temp['a'];
+//             $b = $temp['b'];
+
+//             assert('$a == 1');
+//             assert('$b == 515');
+//         },
+//         $buffer
+//     ),
+//     bench(
+//         'temp + object access',
+//         $iterations,
+//         function ($buffer) {
+//             $temp = (object) unpack("Ca/nb", $buffer);
+//             $buffer = substr($buffer, 3);
+//             $a = $temp->a;
+//             $b = $temp->b;
+
+//             assert('$a == 1');
+//             assert('$b == 515');
+//         },
+//         $buffer
+//     ),
+//     bench(
+//         'list + multiple unpacks',
+//         $iterations,
+//         function ($buffer) {
+//             list(, $a) = unpack("C", $buffer);
+//             $buffer = substr($buffer, 1);
+
+//             list(, $b) = unpack('n', $buffer);
+//             $buffer = substr($buffer, 2);
+
+//             assert('$a == 1');
+//             assert('$b == 515');
+//         },
+//         $buffer
+//     )
+// ];
+
+
+// $results = [
+//     bench(
+//         'strcmp',
+//         $iterations,
+//         function ($buffer) {
+//             $x = 260 === ord($buffer[3]);
+//         },
+//         $buffer
+//     ),
+//     bench(
+//         'ord',
+//         $iterations,
+//         function ($buffer) {
+//             $x = "\xce" === $buffer[3];
+//         },
+//         $buffer
+//     ),
+// ];
+
+// $results = [
+//     bench(
+//         'if',
+//         $iterations,
+//         function ($buffer) {
+//             $type = ord($buffer);
+
+//             if (Constants::FRAME_METHOD === $type) {
+//                 $x = 1;
+//             } elseif (Constants::FRAME_HEADER === $type) {
+//                 $x = 2;
+//             } elseif (Constants::FRAME_BODY === $type) {
+//                 $x = 3;
+//             } elseif (Constants::FRAME_HEARTBEAT === $type) {
+//                 $x = 4;
+//             }
+//         },
+//         $buffer
+//     ),
+//     bench(
+//         'switch',
+//         $iterations,
+//         function ($buffer) {
+//             $type = ord($buffer);
+
+//             switch ($type) {
+//                 case Constants::FRAME_METHOD:
+//                     $x = 1;
+//                     break;
+//                 case Constants::FRAME_HEADER:
+//                     $x = 2;
+//                     break;
+//                 case Constants::FRAME_BODY:
+//                     $x = 3;
+//                     break;
+//                 case Constants::FRAME_HEARTBEAT:
+//                     $x = 4;
+//                     break;
+//             }
+//         },
+//         $buffer
+//     ),
+// ];
+
+// $results = [
+//     bench(
+//         'func',
+//         1,
+//         function ($buffer) use ($iterations) {
+//             $produce = function () use (&$iterations) {
+//                 return --$iterations;
+//             };
+
+//             while ($x = $produce()) {
+//             }
+//         },
+//         $buffer
+//     ),
+//     bench(
+//         'generator',
+//         1,
+//         function ($buffer) use ($iterations) {
+//             $produce = function () use (&$iterations) {
+//                 while (--$iterations) {
+//                     yield $iterations;
+//                 }
+//             };
+
+//             foreach ($produce() as $x) {
+//             }
+//         },
+//         $buffer
+//     ),
+// ];
+
+// $results = [
+//     bench(
+//         'multi substr',
+//         $iterations,
+//         function ($buffer) {
+//             for ($i = 0; $i < 4; ++$i) {
+//                 $o = ord($buffer);
+//                 $buffer = substr($buffer, 1);
+//             }
+//         },
+//         $buffer
+//     ),
+//     bench(
+//         'single substr',
+//         $iterations,
+//         function ($buffer) {
+//             $counter = 0;
+//             for ($i = 0; $i < 4; ++$i) {
+//                 $o = $buffer[$counter++];
+//             }
+//             $buffer = substr($buffer, $counter);
+//         },
+//         $buffer
+//     ),
+// ];
+
+$results = [
+    bench(
+        'multi substr',
+        $iterations,
+        function ($buffer) {
+            for ($i = 0; $i < 1; ++$i) {
+                $o = ord($buffer);
+                $buffer = substr($buffer, 1);
+            }
+        },
+        $buffer
+    ),
+    bench(
+        'single substr',
+        $iterations,
+        function ($buffer) {
+            $counter = 0;
+            for ($i = 0; $i < 1; ++$i) {
+                $o = ord($buffer[$counter++]);
+            }
+            $buffer = substr($buffer, $counter);
+        },
+        $buffer
+    ),
+];
+
+
+usort(
+    $results,
+    function ($a, $b) {
+        if ($a[1] >= $b[1]) {
+            return 1;
+        } else {
+            return -1;
+        }
+    }
+);
+
+$pad = max(
+    array_map(
+        function ($r) {
+            return strlen($r[0]);
+        },
+        $results
+    )
+);
+
+$fastest = $results[0][1];
+
+echo PHP_EOL;
+foreach ($results as list($description, $time)) {
+    echo $description;
+    echo str_repeat(' ', $pad - strlen($description));
+    echo ' : ';
+    echo number_format($time, 5);
+
+    if ($time > $fastest) {
+        echo ' (+';
+        echo number_format($time - $fastest, 5);
+        echo ')';
+    }
+
+    echo PHP_EOL;
+}

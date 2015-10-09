@@ -6,7 +6,7 @@ Eloquent\Asplode\Asplode::install();
 
 use React\EventLoop\Factory;
 use Recoil\Amqp\ConnectionOptions;
-use Recoil\Amqp\ReactConnection;
+use Recoil\Amqp\React\ReactConnection;
 
 $loop = Factory::create();
 $options = ConnectionOptions::create();
