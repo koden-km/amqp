@@ -1,7 +1,6 @@
 <?php
 namespace Recoil\Amqp\Protocol;
 
-interface IncomingFrame
+interface IncomingFrame extends Frame
 {
-    public function acceptIncomingFrameVisitor(IncomingFrameVisitor $visitor);
 }

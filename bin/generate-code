@@ -2,13 +2,12 @@
 <?php
 require __DIR__ . '/../vendor/autoload.php';
 
-use Recoil\Amqp\CodeGen\GeneratorEngine;
+use Recoil\Amqp\CodeGen\CodeGeneratorEngine;
 
 Eloquent\Asplode\Asplode::install();
 
-$engine = new GeneratorEngine(
+$engine = new CodeGeneratorEngine();
+$engine->generate(
     __DIR__ . '/../res/amqp-rabbitmq-0.9.1.json',
     __DIR__ . '/../src-generated'
 );
-
-$engine->generate();
