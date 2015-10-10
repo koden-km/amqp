@@ -41,12 +41,15 @@ final class FrameVisitorGenerator implements CodeGenerator
         $direction
     ) {
         yield '<?php';
-        yield 'namespace Recoil\Amqp\Protocol\\' . $amqpVersion . ';';
+        yield 'namespace Recoil\Amqp\\' . $amqpVersion . '\Protocol;';
         yield;
-        yield 'use Recoil\Amqp\Protocol\FrameVisitor;';
-        yield;
-        yield 'interface ' . $direction . 'FrameVisitor extends FrameVisitor';
+        yield 'interface ' . $direction . 'FrameVisitor';
         yield '{';
+
+        yield sprintf(
+            '    public function visit%sHeartbeatFrame(HeartbeatFrame $frame);',
+            $direction
+        );
 
         foreach ($classes as $class) {
             foreach ($class->methods as $method) {
@@ -55,16 +58,16 @@ final class FrameVisitorGenerator implements CodeGenerator
                     $bumpyMethod = $this->toBumpyCase($method->name);
 
                     yield sprintf(
-                        '    public function visit%s%sFrame(%s\\%sFrame $frame);',
+                        '    public function visit%s%s%sFrame(%s\\%s%sFrame $frame);',
+                        $direction,
                         $bumpyClass,
                         $bumpyMethod,
+                        $bumpyClass,
                         $bumpyClass,
                         $bumpyMethod
                     );
                 }
             }
-
-            yield;
         }
 
         yield '}';

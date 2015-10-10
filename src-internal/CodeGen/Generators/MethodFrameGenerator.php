@@ -25,7 +25,8 @@ final class MethodFrameGenerator implements CodeGenerator
         foreach ($amqpSpec->classes as $class) {
             foreach ($class->methods as $method) {
                 $filename = sprintf(
-                    '%s/%sFrame.php',
+                    '%s/%s%sFrame.php',
+                    $this->toBumpyCase($class->name),
                     $this->toBumpyCase($class->name),
                     $this->toBumpyCase($method->name)
                 );
@@ -45,24 +46,24 @@ final class MethodFrameGenerator implements CodeGenerator
         $interfaces = [];
 
         yield '<?php';
-        yield 'namespace Recoil\Amqp\Protocol\\' . $amqpVersion . '\\' . $this->toBumpyCase($class->name) . ';';
+        yield 'namespace Recoil\Amqp\\' . $amqpVersion . '\Protocol\\' . $this->toBumpyCase($class->name) . ';';
         yield;
 
-        yield 'use Recoil\Amqp\Protocol\FrameVisitor;';
-
         if ($this->isIncomingMethod($method)) {
-            yield 'use Recoil\Amqp\Protocol\IncomingFrame;';
+            yield 'use Recoil\Amqp\\' . $amqpVersion . '\Protocol\IncomingFrame;';
+            yield 'use Recoil\Amqp\\' . $amqpVersion . '\Protocol\IncomingFrameVisitor;';
             $interfaces[] = 'IncomingFrame';
         }
 
         if ($this->isOutgoingMethod($method)) {
-            yield 'use Recoil\Amqp\Protocol\OutgoingFrame;';
+            yield 'use Recoil\Amqp\\' . $amqpVersion . '\Protocol\OutgoingFrame;';
+            yield 'use Recoil\Amqp\\' . $amqpVersion . '\Protocol\OutgoingFrameVisitor;';
             $interfaces[] = 'OutgoingFrame';
         }
 
         yield;
 
-        $className = $this->toBumpyCase($method->name) . 'Frame';
+        $className = $this->toBumpyCase($class->name, $method->name) . 'Frame';
 
         yield 'final class ' . $className . ' implements ' . implode(', ', $interfaces);
         yield '{';
@@ -73,10 +74,54 @@ final class MethodFrameGenerator implements CodeGenerator
         }
 
         yield;
-        yield '    public function accept(FrameVisitor $visitor)';
-        yield '    {';
-        yield '        return $visitor->visit' . $this->toBumpyCase($class->name) . $className . '($this);';
+        yield '    public static function create(';
+        yield '        $channel = 0';
+
+        foreach ($method->arguments as $argument) {
+            yield '      , $' . $this->toCamelCase($argument->name) . ' = null';
+        }
+
+        yield '    ) {';
+        yield '        $frame = new self();';
+        yield;
+        yield '        $frame->channel = $channel;';
+
+        foreach ($method->arguments as $argument) {
+            $name = $this->toCamelCase($argument->name);
+            if (property_exists($argument, 'default-value')) {
+                $default = $argument->{'default-value'};
+
+                if (is_array($default) || is_object($default)) {
+                    $default = '[]';
+                } else {
+                    $default = var_export($default, true);
+                }
+
+                $expression = 'null === $' . $name . ' ? ' . $default . ' : $' . $name;
+            } else {
+                $expression = '$' . $name;
+            }
+            yield '        $frame->' . $name . ' = ' . $expression . ';';
+        }
+
+        yield;
+        yield '        return $frame;';
         yield '    }';
+        yield;
+
+        if ($this->isIncomingMethod($method)) {
+            yield '    public function acceptIncoming(IncomingFrameVisitor $visitor)';
+            yield '    {';
+            yield '        return $visitor->visitIncoming' . $className . '($this);';
+            yield '    }';
+        }
+
+        if ($this->isOutgoingMethod($method)) {
+            yield '    public function acceptOutgoing(OutgoingFrameVisitor $visitor)';
+            yield '    {';
+            yield '        return $visitor->visitOutgoing' . $className . '($this);';
+            yield '    }';
+        }
 
         yield '}';
     }

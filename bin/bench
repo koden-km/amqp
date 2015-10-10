@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-use Recoil\Amqp\Protocol\Constants;
+use Recoil\Amqp\v091\Protocol\Constants;
 require __DIR__ . '/../vendor/autoload.php';
 
 $buffer = "\x01\x02\x03\x04";

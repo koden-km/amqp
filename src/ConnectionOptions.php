@@ -1,6 +1,7 @@
 <?php
 namespace Recoil\Amqp;
 
+
 /**
  * AMQP connection options.
  */
@@ -81,6 +82,26 @@ final class ConnectionOptions
     public function vhost()
     {
         return $this->vhost;
+    }
+
+    /**
+     * Get the product name to report to the server.
+     *
+     * @return string The product name.
+     */
+    public function productName()
+    {
+        return PackageInfo::NAME;
+    }
+
+    /**
+     * Get the product version to report to the server.
+     *
+     * @return string The product version.
+     */
+    public function productVersion()
+    {
+        return PackageInfo::VERSION;
     }
 
     /**

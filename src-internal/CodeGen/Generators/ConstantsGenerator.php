@@ -34,7 +34,7 @@ final class ConstantsGenerator implements CodeGenerator
         $previous = 0;
 
         yield '<?php';
-        yield 'namespace Recoil\Amqp\Protocol\\' . $amqpVersion . ';';
+        yield 'namespace Recoil\Amqp\\' . $amqpVersion . '\Protocol;';
         yield;
         yield 'final class Constants';
         yield '{';

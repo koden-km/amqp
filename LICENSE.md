@@ -1,6 +1,6 @@
 # License
 
-**© 2014, [James Harris]**
+**© 2015, [James Harris]**
 
 [james harris]: https://github.com/jmalloc
 

@@ -31,7 +31,7 @@ final class MethodSerializerGenerator implements CodeGenerator
     private function generateTrait($amqpVersion, $amqpSpec)
     {
         yield '<?php';
-        yield 'namespace Recoil\Amqp\Protocol\\' . $amqpVersion . ';';
+        yield 'namespace Recoil\Amqp\\' . $amqpVersion . '\Protocol;';
         yield;
         yield 'trait MethodSerializerTrait';
         yield '{';
@@ -43,9 +43,10 @@ final class MethodSerializerGenerator implements CodeGenerator
                     $bumpyMethod = $this->toBumpyCase($method->name);
 
                     yield sprintf(
-                        '    public function visit%s%sFrame(%s\\%sFrame $frame)',
+                        '    public function visitOutgoing%s%sFrame(%s\\%s%sFrame $frame)',
                         $bumpyClass,
                         $bumpyMethod,
+                        $bumpyClass,
                         $bumpyClass,
                         $bumpyMethod
                     );

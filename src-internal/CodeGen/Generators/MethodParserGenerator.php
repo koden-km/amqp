@@ -31,7 +31,7 @@ final class MethodParserGenerator implements CodeGenerator
     private function generateTrait($amqpVersion, $amqpSpec)
     {
         yield '<?php';
-        yield 'namespace Recoil\Amqp\Protocol\\' . $amqpVersion . ';';
+        yield 'namespace Recoil\Amqp\\' . $amqpVersion . '\Protocol;';
         yield;
         yield 'trait FrameParserMethodTrait';
         yield '{';
@@ -81,7 +81,7 @@ final class MethodParserGenerator implements CodeGenerator
 
     private function generateMethodParserCode($amqpSpec, $class, $method)
     {
-        $entityClass = $this->toBumpyCase($class->name) . '\\' . $this->toBumpyCase($method->name) . 'Frame';
+        $entityClass = $this->toBumpyCase($class->name) . '\\' . $this->toBumpyCase($class->name, $method->name) . 'Frame';
 
         if (!$method->arguments) {
             yield '                return new ' . $entityClass . '();';

@@ -27,7 +27,7 @@ final class CodeGeneratorEngine
     {
         $spec    = json_decode(file_get_contents($filename));
         $version = 'v' . $spec->{'major-version'} . $spec->{'minor-version'} . $spec->revision;
-        $target .= '/Protocol/' . $version;
+        $target .= '/' . $version . '/Protocol';
 
         $this->delete($target);
 
@@ -72,19 +72,16 @@ final class CodeGeneratorEngine
 
     private function delete($path)
     {
-        foreach (scandir($path) as $entry) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
+        if (is_dir($path)) {
+            foreach (scandir($path) as $entry) {
+                if ($entry !== '.' && $entry !== '..') {
+                    $this->delete($path . '/' . $entry);
+                }
             }
 
-            $p = $path . '/' . $entry;
-
-            if (is_dir($p)) {
-                $this->delete($p);
-                rmdir($p);
-            } else {
-                unlink($p);
-            }
+            rmdir($path);
+        } elseif (file_exists($path)) {
+            unlink($path);
         }
     }
 

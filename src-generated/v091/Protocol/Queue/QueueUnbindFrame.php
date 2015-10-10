@@ -1,0 +1,40 @@
+<?php
+namespace Recoil\Amqp\v091\Protocol\Queue;
+
+use Recoil\Amqp\v091\Protocol\OutgoingFrame;
+use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
+
+final class QueueUnbindFrame implements OutgoingFrame
+{
+    public $channel;
+    public $reserved1; // short
+    public $queue; // shortstr
+    public $exchange; // shortstr
+    public $routingKey; // shortstr
+    public $arguments; // table
+
+    public static function create(
+        $channel = 0
+      , $reserved1 = null
+      , $queue = null
+      , $exchange = null
+      , $routingKey = null
+      , $arguments = null
+    ) {
+        $frame = new self();
+
+        $frame->channel = $channel;
+        $frame->reserved1 = null === $reserved1 ? 0 : $reserved1;
+        $frame->queue = null === $queue ? '' : $queue;
+        $frame->exchange = $exchange;
+        $frame->routingKey = null === $routingKey ? '' : $routingKey;
+        $frame->arguments = null === $arguments ? [] : $arguments;
+
+        return $frame;
+    }
+
+    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
+    {
+        return $visitor->visitOutgoingQueueUnbindFrame($this);
+    }
+}

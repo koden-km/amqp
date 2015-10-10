@@ -1,10 +1,14 @@
 <?php
 namespace Recoil\Amqp;
 
+use Evenement\EventEmitterInterface;
+
 /**
  * A connection to an AMQP server.
+ *
+ * @event "close" if AMQP connection is closed.
  */
-interface Connection
+interface Connection extends EventEmitterInterface
 {
     /**
      * Create a new AMQP channel.
