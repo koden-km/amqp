@@ -9,6 +9,8 @@ use Recoil\Amqp\ConnectionException;
 use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\Connector;
 use Recoil\Amqp\v091\Amqp091Connection;
+use Recoil\Amqp\v091\Protocol\FrameParser;
+use Recoil\Amqp\v091\Protocol\FrameSerializer;
 use RuntimeException;
 use function React\Promise\reject;
 
@@ -19,10 +21,14 @@ final class StreamConnector implements Connector
 {
     public function __construct(
         ConnectionOptions $options,
-        LoopInterface $loop
+        LoopInterface $loop,
+        FrameParser $parser = null,
+        FrameSerializer $serializer = null
     ) {
         $this->options = $options;
         $this->loop = $loop;
+        $this->parser = $parser ?: new FrameParser();
+        $this->serializer = $serializer ?: new FrameSerializer();
     }
 
     /**
@@ -62,15 +68,38 @@ final class StreamConnector implements Connector
 
         $this->isolator()->stream_set_blocking($stream, false);
 
-        $transport = new StreamTransport(
-            new SocketStream($stream, $this->loop),
+        $stream = new SocketStream(
+            $stream,
             $this->loop
         );
 
-        return $transport
-            ->handshake($this->options)
-            ->then(function () use ($transport) {
-                return new Amqp091Connection($transport);
+        $handshake = new StreamHandshake(
+            $stream,
+            $this->options,
+            $this->loop,
+            $this->parser,
+            $this->serializer
+        );
+
+        return $handshake
+            ->start()
+            ->then(function ($frames) use ($stream) {
+                list($startFrame, $tuneFrame) = $frames;
+
+                $transport = new StreamTransport(
+                    $stream,
+                    $this->options,
+                    $this->loop,
+                    $this->parser,
+                    $this->serializer
+                );
+
+                $transport->start($tuneFrame->heartbeat);
+
+                return new Amqp091Connection(
+                    $transport,
+                    $tuneFrame->channelMax
+                );
             });
     }
 
@@ -78,4 +107,6 @@ final class StreamConnector implements Connector
 
     private $options;
     private $loop;
+    private $parser;
+    private $serializer;
 }

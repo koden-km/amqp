@@ -21,9 +21,6 @@ interface Connection extends EventEmitterInterface
 
     /**
      * Disconnect from the server.
-     *
-     * Via promise:
-     * @return null
      */
     public function close();
 }

@@ -7,123 +7,68 @@ use React\Promise\Deferred;
 use React\Stream\DuplexStreamInterface;
 use Recoil\Amqp\ConnectionException;
 use Recoil\Amqp\ConnectionOptions;
-use Recoil\Amqp\PackageInfo;
-use Recoil\Amqp\v091\Protocol\Connection\ConnectionOpenFrame;
-use Recoil\Amqp\v091\Protocol\Connection\ConnectionOpenOkFrame;
-use Recoil\Amqp\v091\Protocol\Connection\ConnectionStartFrame;
-use Recoil\Amqp\v091\Protocol\Connection\ConnectionStartOkFrame;
-use Recoil\Amqp\v091\Protocol\Connection\ConnectionTuneFrame;
-use Recoil\Amqp\v091\Protocol\Connection\ConnectionTuneOkFrame;
+use Recoil\Amqp\ProtocolException;
+use Recoil\Amqp\v091\Protocol\Connection\ConnectionCloseFrame;
+use Recoil\Amqp\v091\Protocol\Connection\ConnectionCloseOkFrame;
+use Recoil\Amqp\v091\Protocol\Constants;
 use Recoil\Amqp\v091\Protocol\FrameParser;
 use Recoil\Amqp\v091\Protocol\FrameSerializer;
 use Recoil\Amqp\v091\Protocol\HeartbeatFrame;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 use Recoil\Amqp\v091\Protocol\Transport;
-use Traversable;
+use function React\Promise\Timer\timeout;
 use function React\Promise\resolve;
 
+/**
+ * Send and receive AMQP frames via a React stream.
+ *
+ * Before frames can be transmitted the handshake must be completed. Heartbeat
+ * frames are managed automatically by the transport.
+ */
 final class StreamTransport implements Transport
 {
+    /**
+     * @param DuplexStreamInterface $stream     The stream to use for communication, typically a TCP connection.
+     * @param ConnectionOptions     $options    Connection options.
+     * @param LoopInterface         $loop       The event loop used for the timeout timer.
+     * @param FrameParser           $parser     The parser used to create AMQP frames from binary data, or null for the default.
+     * @param FrameSerializer       $serializer The serialize used to create binary data from AMQP frames, or null for the default.
+     */
     public function __construct(
         DuplexStreamInterface $stream,
+        ConnectionOptions $options,
         LoopInterface $loop,
-        FrameParser $parser = null,
-        FrameSerializer $serializer = null
+        FrameParser $parser,
+        FrameSerializer $serializer
     ) {
         $this->stream = $stream;
+        $this->options = $options;
         $this->loop = $loop;
-        $this->parser = $parser ?: new FrameParser();
-        $this->serializer = $serializer ?: new FrameSerializer();
+        $this->parser = $parser;
+        $this->serializer = $serializer;
+        $this->state = self::STATE_READY;
         $this->waiters = [];
-
-        $this->stream->on('data', function ($data) {
-            $this->heartbeatsWithoutReceive = 0;
-            $this->resolveWaiters($this->parser->feed($data));
-        });
-
-        $this->stream->on('error', function ($error) {
-            $this->rejectWaiters(null, $error);
-        });
-
-        $this->stream->on('close', function () {
-            if ($this->heartbeatTimer) {
-                $this->heartbeatTimer->cancel();
-            }
-            $this->rejectWaiters(null);
-        });
+        $this->listeners = [];
     }
 
     /**
-     * Begin the AMQP handshake.
-     *
-     * @param ConnectionOptions $options
-     *
-     * Via promise:
-     * @return null
-     * @throws ConnectionException
+     * Start the transport.
      */
-    public function handshake(ConnectionOptions $options)
+    public function start($heartbeatInterval)
     {
-        $this->stream->write("AMQP\x00\x00\x09\x01");
+        // Create time that triggers the heartbeat at regular intervals ...
+        $this->heartbeatTimer = $this->loop->addPeriodicTimer(
+            $heartbeatInterval,
+            [$this, 'checkHeartbeat']
+        );
 
-        return $this
-            ->wait(ConnectionStartFrame::class)
-            ->then(function ($frame) use ($options) {
-                $this->send(
-                    ConnectionStartOkFrame::create(
-                        0,
-                        [
-                            'product'     => $options->productName(),
-                            'version'     => $options->productVersion(),
-                            'platform'    => PackageInfo::AMQP_PLATFORM,
-                            'copyright'   => PackageInfo::AMQP_COPYRIGHT,
-                            'information' => PackageInfo::AMQP_INFORMATION,
-                        ],
-                        'AMQPLAIN',
-                        $this->serializer->serializePlainCredentials(
-                            $options->username(),
-                            $options->password()
-                        )
-                    )
-                );
+        // Connect stream handlers, use public methods so they can be removed easily ...
+        $this->stream->on('data',  [$this, 'streamData']);
+        $this->stream->on('close', [$this, 'streamClosed']);
+        $this->stream->on('error', [$this, 'streamException']);
+        $this->stream->resume();
 
-                return $this->wait(ConnectionTuneFrame::class);
-            })
-            ->otherwise(function (Exception $previous = null) use ($options) {
-                throw ConnectionException::authenticationFailed($options, $previous);
-            })
-            ->then(function ($frame) use ($options) {
-                $this->tuningOptions = $frame;
-
-                $this->send(
-                    ConnectionTuneOkFrame::create(
-                        0,
-                        $this->tuningOptions->channelMax,
-                        $this->tuningOptions->frameMax,
-                        $this->tuningOptions->heartbeat
-                    )
-                );
-
-                $this->send(
-                    ConnectionOpenFrame::create(
-                        0,
-                        $options->vhost()
-                    )
-                );
-
-                return $this->wait(ConnectionOpenOkFrame::class);
-            })
-            ->otherwise(function (Exception $previous = null) use ($options) {
-                throw ConnectionException::handshakeFailed($options, $previous);
-            })
-            ->then(function () {
-                $this->heartbeatTimer = $this->loop->addPeriodicTimer(
-                    $this->tuningOptions->heartbeat,
-                    function () {
-                        $this->heartbeat();
-                    }
-                );
-            });
+        $this->state = self::STATE_OPEN;
     }
 
     /**
@@ -143,91 +88,303 @@ final class StreamTransport implements Transport
     /**
      * Wait for the next frame of a given type.
      *
-     * @param string       $type    The type of frame (the PHP class name).
-     * @param integer|null $channel The channel on which to wait, or null for any channel.
+     * @param string  $type    The type of frame (the PHP class name).
+     * @param integer $channel The channel on which to wait, or null for any channel.
      *
      * Via promise:
-     * @return IncomingFrame
-     * @throws Exception
+     * @return IncomingFrame When the next matching frame is received.
+     * @throws Exception     If the transport or channel is closed.
      */
     public function wait($type, $channel = 0)
     {
-        $deferred = new Deferred();
-        $this->waiters[$type][] = [$channel, $deferred];
+        if (self::STATE_OPEN !== $this->state) {
+            throw new LogicException('Transport is not open.');
+        }
+
+        $deferred = null;
+        $deferred = new Deferred(
+            function () use (&$deferred, $channel, $type) {
+                $index = array_search(
+                    $deferred,
+                    $this->waiters[$channel][$type],
+                    true
+                );
+
+                if (false === $index) {
+                    return;
+                } elseif (0 === $index) {
+                    array_shift($this->waiters[$channel][$type]);
+                } else {
+                    array_splice(
+                        $this->waiters[$channel][$type],
+                        $index,
+                        1
+                    );
+                }
+            }
+        );
+
+        $this->waiters[$channel][$type][] = $deferred;
 
         return $deferred->promise();
     }
 
     /**
-     * Receive notification of frames of a given type.
+     * Receive notification when a frame of a given type is received.
      *
-     * @param string       $type    The type of frame (the PHP class name).
-     * @param integer|null $channel The channel on which to wait, or null for any channel.
-     *
-     * The promise is notified of each incoming frame until it is cancelled.
-     * If the transport is closed cleanly the promise is resolved, otherwise it
-     * is rejected.
+     * @param string  $type    The type of frame (the PHP class name).
+     * @param integer $channel The channel on which to wait, or null for any channel.
      *
      * Via promise:
-     * @return null
-     * @notify IncomingFrame
-     * @throws Exception
+     * @return null      If the transport or channel is closed cleanly.
+     * @notify IncomingFrame For each matching frame that is received, unless it was matched to a previous call to wait().
+     * @throws Exception If the transport or channel is closed unexpectedly.
      */
-    public function on($type, $channel = 0)
+    public function listen($type, $channel = 0)
     {
-    }
-
-    private function resolveWaiters(Traversable $frames)
-    {
-        foreach ($frames as $frame) {
-            $type = get_class($frame);
-
-            if (isset($this->waiters[$type])) {
-                foreach ($this->waiters[$type] as $index => list($channelFilter, $deferred)) {
-                    if ($channelFilter === null || $channelFilter === $frame->channel) {
-                        unset($this->waiters[$type][$index]);
-                        $deferred->resolve($frame);
-                    }
-                }
-            }
+        if (self::STATE_OPEN !== $this->state) {
+            throw new LogicException('Transport is not open.');
         }
-    }
 
-    private function rejectWaiters($channel, Exception $error = null)
-    {
-        foreach ($this->waiters as $type => $waiters) {
-            foreach ($waiters as $index => list($channelFilter, $deferred)) {
-                if ($channel === null || $channelFilter === null || $channelFilter === $channel) {
-                    unset($this->waiters[$type][$index]);
-                    $deferred->reject($error);
-                }
+        $index = count($this->waiters[$channel][$type]);
+        $deferred = new Deferred(
+            function () use ($index, $channel, $type) {
+                unset($this->listeners[$channel][$type][$index]);
             }
-        }
+        );
+
+        $this->listeners[$channel][$type][] = $deferred;
+
+        return $deferred->promise();
     }
 
-    private function heartbeat()
+    /**
+     * Close the transport cleanly via AMQP close negotation.
+     */
+    public function close()
+    {
+        if (self::STATE_OPEN !== $this->state) {
+            throw new LogicException('Transport is not open.');
+        }
+
+        $this->state = self::STATE_CLOSING;
+
+        $this->send(
+            ConnectionCloseFrame::create()
+        );
+    }
+
+    /**
+     * Check the heartbeat state.
+     *
+     * @access private
+     */
+    public function checkHeartbeat()
     {
         if (++$this->heartbeatsWithoutSend >= 1) {
             $this->send(HeartbeatFrame::create());
         }
 
         if (++$this->heartbeatsWithoutReceive >= 2) {
-            $this->rejectWaiters(
-                null,
-                ConnectionException::heartbeatExpired($this->tuneOptions->heartbeat)
+            $this->shutdown(
+                ConnectionException::heartbeatTimedOut(
+                    $this->options,
+                    $this->heartbeatTimer->getInterval()
+                )
             );
 
             $this->stream->close();
         }
     }
 
+    /**
+     * Respond to data received from the stream.
+     *
+     * @access private
+     *
+     * @param string $data
+     */
+    public function streamData($data)
+    {
+        $this->heartbeatsWithoutReceive = 0;
+
+        try {
+            if (self::STATE_OPEN === $this->state) {
+                foreach ($this->parser->feed($data) as $frame) {
+                    $type = get_class($frame);
+
+                    if (isset($this->waiters[$frame->channel][$type])) {
+                        $deferred = array_shift($this->waiters[$frame->channel][$type]);
+                        $deferred->resolve($frame);
+                        continue;
+                    }
+
+                    if (isset($this->listeners[$frame->channel][$type])) {
+                        foreach ($this->listeners[$frame->channel][$type] as $deferred) {
+                            $deferred->notify($frame);
+                        }
+                    }
+
+                    if ($frame instanceof ConnectionCloseFrame) {
+                        $this->closedByServer($frame);
+                        break;
+                    }
+                }
+            } elseif (self::STATE_CLOSING === $this->state) {
+                foreach ($this->parser->feed($data) as $frame) {
+                    if ($frame instanceof ConnectionCloseOkFrame) {
+                        $this->closedByClient($frame);
+                    }
+                }
+            }
+        } catch (ProtocolException $e) {
+            $this->rejectListeners($e);
+            $this->stream->close();
+        }
+    }
+
+    /**
+     * Respond to the stream being closed.
+     *
+     * @access private
+     */
+    public function streamClosed()
+    {
+        $this->state = self::STATE_CLOSED;
+
+        $this->heartbeatTimer->cancel();
+
+        $this->rejectListeners(
+            ConnectionException::closedUnexpectedly($this->options)
+        );
+    }
+
+    /**
+     * Respond to an error from the stream.
+     *
+     * @access private
+     *
+     * @param Exception $exception
+     */
+    public function streamException(Exception $exception)
+    {
+        $this->rejectListeners(
+            ConnectionException::closedUnexpectedly($this->options, $exception)
+        );
+
+        $this->stream->close();
+    }
+
+    private function closedByServer(ConnectionCloseFrame $frame)
+    {
+        $this->send(ConnectionCloseOkFrame::create());
+
+        if (Constants::CONNECTION_FORCED === $frame->replyCode) {
+            $exception = ConnectionException::closedUnexpectedly($this->options);
+        } else {
+            // TODO
+            $exception = new RuntimeException($frame->replyText, $frame->replyCode);
+        }
+
+        $this->rejectListeners($exception);
+
+        $this->stream->close();
+    }
+
+    private function closedByClient(ConnectionCloseOkFrame $frame)
+    {
+        $this->rejectListeners(null);
+
+        $this->stream->close();
+    }
+
+    /**
+     * Reject all pending waiters and listeners.
+     *
+     * @param Exception|null $exception The rejection exception, if any.
+     */
+    private function rejectListeners(Exception $exception = null)
+    {
+        $waiters = $this->waiters;
+        $this->waiters = [];
+
+        foreach ($waiters as $channel => $deferreds) {
+            foreach ($deferreds as $deferred) {
+                $deferred->reject($exception);
+            }
+        }
+
+        $listeners = $this->listeners;
+        $this->listeners = [];
+
+        foreach ($listeners as $channel => $deferreds) {
+            foreach ($deferreds as $deferred) {
+                if ($exception) {
+                    $deferred->reject($exception);
+                } else {
+                    $deferred->resolve();
+                }
+            }
+        }
+    }
+
+    const STATE_READY   = 0;
+    const STATE_OPEN    = 1;
+    const STATE_CLOSING = 2;
+    const STATE_CLOSED  = 3;
+
+    /**
+     * @var DuplexStreamInterface The stream to use for communication, typically a TCP connection.
+     */
     private $stream;
+
+    /**
+     * @var ConnectionOptions
+     */
+    private $options;
+
+    /**
+     * @var LoopInterface The React event loop to use for timers.
+     */
     private $loop;
+
+    /**
+     * @var FrameParser The parser used to create AMQP frames from binary data, or null for the default.
+     */
     private $parser;
+
+    /**
+     * @var FrameSerializer The serialize used to create binary data from AMQP frames, or null for the default.
+     */
     private $serializer;
+
+    /**
+     * @var integer The current state of the transport, one of the self::STATE_* constants.
+     */
+    private $state;
+
+    /**
+     * @var array<integer, array<string, Deferred>> A 2-dimensional array mapping channel/frame type to a queue of deferreds.
+     */
     private $waiters;
-    private $tuningOptions;
+
+    /**
+     * @var array<integer, array<string, Deferred>> A 2-dimensional array mapping channel/frame to a sequence of deferreds.
+     */
+    private $listeners;
+
+    /**
+     * @var TimerInterface|null A timer that fires at the heartbeat interval, or null if the state is not OPEN.
+     */
     private $heartbeatTimer;
+
+    /**
+     * @var integer THe number of heartbeat ticks that have occurred without sending any data.
+     */
     private $heartbeatsWithoutSend;
+
+    /**
+     * @var integer The number of heartbeat ticks that have occurred without receiving any data.
+     */
     private $heartbeatsWithoutReceive;
 }

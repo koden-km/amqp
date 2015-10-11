@@ -1,6 +1,8 @@
 <?php
 namespace Recoil\Amqp\v091\Protocol;
 
+use Recoil\Amqp\v091\Debug;
+
 final class FrameSerializer implements OutgoingFrameVisitor
 {
     /**
@@ -12,6 +14,10 @@ final class FrameSerializer implements OutgoingFrameVisitor
      */
     public function serialize(OutgoingFrame $frame)
     {
+        if (Debug::ENABLED) {
+            Debug::dumpOutgoingFrame($frame);
+        }
+
         return $frame->acceptOutgoing($this);
     }
 
@@ -24,7 +30,7 @@ final class FrameSerializer implements OutgoingFrameVisitor
      *
      * @return string The binary serialized frame.
      */
-    public function serializePlainCredentials($username, $password)
+    public function serializeAmqPlainCredentials($username, $password)
     {
         return $this->serializeShortString('LOGIN')
              . 'S' . $this->serializeLongString($username)

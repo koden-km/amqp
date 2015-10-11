@@ -1,22 +1,14 @@
 <?php
 namespace Recoil\Amqp\v091\Protocol;
 
-use Recoil\Amqp\ConnectionException;
-use Recoil\Amqp\ConnectionOptions;
-
+/**
+ * A transport facilitates sending and receiving AMQP frames.
+ *
+ * Before frames can be transmitted the handshake must be completed. Heartbeat
+ * frames are managed automatically by the transport.
+ */
 interface Transport
 {
-    /**
-     * Begin the AMQP handshake.
-     *
-     * @param ConnectionOptions $options
-     *
-     * Via promise:
-     * @return null
-     * @throws ConnectionException
-     */
-    public function handshake(ConnectionOptions $options);
-
     /**
      * Send a frame.
      *
@@ -27,29 +19,30 @@ interface Transport
     /**
      * Wait for the next frame of a given type.
      *
-     * @param string       $type    The type of frame (the PHP class name).
-     * @param integer|null $channel The channel on which to wait, or null for any channel.
+     * @param string  $type    The type of frame (the PHP class name).
+     * @param integer $channel The channel on which to wait, or null for any channel.
      *
      * Via promise:
-     * @return IncomingFrame
-     * @throws Exception
+     * @return IncomingFrame When the next matching frame is received.
+     * @throws Exception     If the transport or channel is closed.
      */
     public function wait($type, $channel = 0);
 
     /**
-     * Receive notification of frames of a given type.
+     * Receive notification when a frame of a given type is received.
      *
-     * @param string       $type    The type of frame (the PHP class name).
-     * @param integer|null $channel The channel on which to wait, or null for any channel.
-     *
-     * The promise is notified of each incoming frame until it is cancelled.
-     * If the transport is closed cleanly the promise is resolved, otherwise it
-     * is rejected.
+     * @param string  $type    The type of frame (the PHP class name).
+     * @param integer $channel The channel on which to wait, or null for any channel.
      *
      * Via promise:
-     * @return null
-     * @notify IncomingFrame
-     * @throws Exception
+     * @return null      If the transport or channel is closed cleanly.
+     * @notify IncomingFrame For each matching frame that is received, unless it was matched to a previous call to wait().
+     * @throws Exception If the transport or channel is closed unexpectedly.
      */
-    public function on($type, $channel = 0);
+    public function listen($type, $channel = 0);
+
+    /**
+     * Close the transport cleanly via AMQP close negotation.
+     */
+    public function close();
 }

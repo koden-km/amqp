@@ -20,8 +20,15 @@ $connector
     ->connect()
     ->then(
         function ($connection) {
-            var_dump($connection);
-        },
+            return $connection->channel();
+        }
+    )
+    ->then(
+        function ($channel) {
+            echo 'Got channel #' . $channel->id() . PHP_EOL;
+        }
+    )
+    ->otherwise(
         function ($error) {
             if ($error instanceof ConnectionException) {
                 echo $error->getMessage() . PHP_EOL;

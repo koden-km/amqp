@@ -59,24 +59,25 @@ final class ConnectionException extends RuntimeException
     }
 
     /**
-     * Create an exception that indicates a failure to complete the AMQP
-     * handshake with the server.
+     * Create an exception that indicates that the credentials specified in the
+     * connection options do not grant access to the requested vhost.
      *
      * @param ConnectionOptions $options
      * @param Exception|null    $previous The exception that caused this exception, if any.
      *
      * @return ConnectionException
      */
-    public static function handshakeFailed(
+    public static function authorizationFailed(
         ConnectionOptions $options,
         Exception $previous = null
     ) {
         return new self(
             sprintf(
-                'Unable to negotiate AMQP connection with server [%s:%d], check vhost name (%s) and permissions.',
+                'Unable to access vhost "%s" as "%s" on AMQP server [%s:%d], check permissions.',
+                $options->vhost(),
+                $options->username(),
                 $options->host(),
-                $options->port(),
-                $options->vhost()
+                $options->port()
             ),
             0,
             $previous
@@ -84,15 +85,52 @@ final class ConnectionException extends RuntimeException
     }
 
     /**
-     * Create an exception that indicates the disconnection of a connection that
-     * is expected to already be established.
+     * Create an exception that indicates a connection closure due to an AMQP
+     * heartbeat timeout.
      *
-     * @param Exception|null $previous The exception that caused this exception, if any.
+     * @param ConnectionOptions $options
+     * @param Exception|null    $previous The exception that caused this exception, if any.
      *
      * @return ConnectionException
      */
-    public static function notConnected(Exception $previous = null)
-    {
-        return new self('Disconnected from AMQP server.', 0, $previous);
+    public static function heartbeatTimedOut(
+        ConnectionOptions $options,
+        $heartbeatInterval,
+        Exception $previous = null
+    ) {
+        return new self(
+            sprintf(
+                'The AMQP connection with server [%s:%d] has timed out, heartbeat not received for over %d seconds.',
+                $options->host(),
+                $options->port(),
+                $heartbeatInterval
+            ),
+            0,
+            $previous
+        );
+    }
+
+    /**
+     * Create an exception that indicates an unexpected closure of the
+     * connection to the AMQP server.
+     *
+     * @param ConnectionOptions $options
+     * @param Exception|null    $previous The exception that caused this exception, if any.
+     *
+     * @return ConnectionException
+     */
+    public static function closedUnexpectedly(
+        ConnectionOptions $options,
+        Exception $previous = null
+    ) {
+        return new self(
+            sprintf(
+                'The AMQP connection with server [%s:%d] was closed unexpectedly.',
+                $options->host(),
+                $options->port()
+            ),
+            0,
+            $previous
+        );
     }
 }

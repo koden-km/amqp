@@ -1,7 +1,6 @@
 <?php
 namespace Recoil\Amqp;
 
-
 /**
  * AMQP connection options.
  */
@@ -91,7 +90,7 @@ final class ConnectionOptions
      */
     public function productName()
     {
-        return PackageInfo::NAME;
+        return PackageInfo::NAME; // TODO make property
     }
 
     /**
@@ -101,7 +100,17 @@ final class ConnectionOptions
      */
     public function productVersion()
     {
-        return PackageInfo::VERSION;
+        return PackageInfo::VERSION; // TODO make property
+    }
+
+    /**
+     * The maximum time to allow for the connection to be established.
+     *
+     * @return integer|float The timeout, in seconds.
+     */
+    public function timeout()
+    {
+        return 3; // TODO make property
     }
 
     /**

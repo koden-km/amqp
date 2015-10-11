@@ -13,11 +13,12 @@
     ],
     "require": {
         "php-64bit": ">=5.6.3",
+        "eloquent/enumeration": "^5.1",
         "icecave/flip": "dev-develop",
         "icecave/isolator": "~2",
-        "eloquent/enumeration": "^5.1",
         "react/event-loop": "^0.4",
         "react/promise": "^2.2",
+        "react/promise-timer": "^1.0",
         "react/socket": "^0.4"
     },
     "require-dev": {

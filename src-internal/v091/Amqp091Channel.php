@@ -1,18 +1,34 @@
 <?php
-namespace Recoil\Amqp;
+namespace Recoil\Amqp\v091;
 
+use Recoil\Amqp\Channel;
+use Recoil\Amqp\DeclareMode;
+use Recoil\Amqp\ExchangeOptions;
+use Recoil\Amqp\ExchangeType;
+use Recoil\Amqp\QosScope;
+use Recoil\Amqp\QueueOptions;
+use Recoil\Amqp\v091\Protocol\Transport;
 
 /**
  * An AMQP channel.
  */
-interface Channel
+final class Amqp091Channel implements Channel
 {
+    public function __construct(Transport $transport, $id)
+    {
+        $this->transport = $transport;
+        $this->id = $id;
+    }
+
     /**
      * Get the channel ID.
      *
      * @return integer The channel ID.
      */
-    public function id();
+    public function id()
+    {
+        return $this->id;
+    }
 
     /**
      * Declare an exchange.
@@ -43,7 +59,9 @@ interface Channel
         ExchangeType $type,
         ExchangeOptions $options = null,
         DeclareMode $mode = null
-    );
+    ) {
+        throw new \LogicException('Not implemented.');
+    }
 
     /**
      * Get the pre-declared, nameless, direct exchange.
@@ -63,7 +81,10 @@ interface Channel
      * @throws ConnectionException if not connected to the AMQP server.
      * @throws LogicException      if the channel has been closed.
      */
-    public function directExchange();
+    public function directExchange()
+    {
+        throw new \LogicException('Not implemented.');
+    }
 
     /**
      * Get the pre-declared "amq.<type>" exchange of the given type.
@@ -80,7 +101,10 @@ interface Channel
      * @throws ConnectionException if not connected to the AMQP server.
      * @throws LogicException      if the channel has been closed.
      */
-    public function amqExchange(ExchangeType $type);
+    public function amqExchange(ExchangeType $type)
+    {
+        throw new \LogicException('Not implemented.');
+    }
 
     /**
      * Declare a queue.
@@ -103,7 +127,9 @@ interface Channel
         $name = '',
         QueueOptions $options = null,
         DeclareMode $mode = null
-    );
+    ) {
+        throw new \LogicException('Not implemented.');
+    }
 
     /**
      * Set the channel's Quality-of-Service limits.
@@ -120,7 +146,10 @@ interface Channel
      * Please note that RabbitMQ does not currently (as of v3.5.5) support
      * prefetch-size limits.
      */
-    public function qos($count, $size = null, QosScope $scope = null);
+    public function qos($count, $size = null, QosScope $scope = null)
+    {
+        throw new \LogicException('Not implemented.');
+    }
 
     /**
      * Close the channel.
@@ -128,5 +157,11 @@ interface Channel
      * Via promise:
      * @return null on success.
      */
-    public function close();
+    public function close()
+    {
+        throw new \LogicException('Not implemented.');
+    }
+
+    private $transport;
+    private $id;
 }
