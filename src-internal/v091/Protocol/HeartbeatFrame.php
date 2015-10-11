@@ -14,7 +14,7 @@ final class HeartbeatFrame implements IncomingFrame, OutgoingFrame
         return self::$instance;
     }
 
-    public function acceptIncoming(INcomingFrameVisitor $visitor)
+    public function acceptIncoming(IncomingFrameVisitor $visitor)
     {
         return $visitor->visitOutgoingHeartbeatFrame($this);
     }
