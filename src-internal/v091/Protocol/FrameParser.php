@@ -8,7 +8,7 @@ use Recoil\Amqp\v091\Debug;
 /**
  * Produces Frame objects from binary data.
  */
-class FrameParser
+final class FrameParser
 {
     public function __construct()
     {

@@ -12,9 +12,11 @@ interface Connector
     /**
      * Connect to an AMQP server.
      *
+     * @param ConnectionOptions $options The options used when establishing the connection.
+     *
      * Via promise:
      * @return Connection          The AMQP connection.
      * @throws ConnectionException if the connection could not be established.
      */
-    public function connect();
+    public function connect(ConnectionOptions $options);
 }

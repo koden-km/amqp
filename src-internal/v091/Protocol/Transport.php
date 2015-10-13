@@ -3,6 +3,7 @@
 namespace Recoil\Amqp\v091\Protocol;
 
 use Exception;
+use Recoil\Amqp\ConnectionOptions;
 
 /**
  * A transport facilitates sending and receiving AMQP frames.
@@ -12,6 +13,14 @@ use Exception;
  */
 interface Transport
 {
+    /**
+     * Start the transport.
+     *
+     * @param ConnectionOptions $options           The options used when establishing the connection.
+     * @param integer           $heartbeatInterval The heartbeat interval, as negotiated during the AMQP handshake. May be lower than the value in the connection options.
+     */
+    public function start(ConnectionOptions $options, $heartbeatInterval);
+
     /**
      * Send a frame.
      *

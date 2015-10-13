@@ -9,15 +9,13 @@ use Recoil\Amqp\ConnectionException;
 use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\v091\React\StreamConnector;
 
+$options = ConnectionOptions::create();
 $loop = Factory::create();
 
-$connector = new StreamConnector(
-    ConnectionOptions::create(),
-    $loop
-);
+$connector = new StreamConnector($loop);
 
 $connector
-    ->connect()
+    ->connect($options)
     ->then(
         function ($connection) {
             return $connection->channel();

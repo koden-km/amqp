@@ -5,7 +5,7 @@ namespace Recoil\Amqp\v091\React;
 use function React\Promise\reject;
 use Icecave\Isolator\IsolatorTrait;
 use React\EventLoop\LoopInterface;
-use React\Socket\Connection as SocketStream;
+use React\Socket\Connection as ReactStream;
 use Recoil\Amqp\Connection;
 use Recoil\Amqp\ConnectionException;
 use Recoil\Amqp\ConnectionOptions;
@@ -21,12 +21,10 @@ use RuntimeException;
 final class StreamConnector implements Connector
 {
     public function __construct(
-        ConnectionOptions $options,
         LoopInterface $loop,
         FrameParser $parser = null,
         FrameSerializer $serializer = null
     ) {
-        $this->options = $options;
         $this->loop = $loop;
         $this->parser = $parser ?: new FrameParser();
         $this->serializer = $serializer ?: new FrameSerializer();
@@ -35,30 +33,34 @@ final class StreamConnector implements Connector
     /**
      * Connect to an AMQP server.
      *
+     * @param ConnectionOptions $options The options used when establishing the connection.
+     *
      * Via promise:
      * @return Connection          The AMQP connection.
      * @throws ConnectionException if the connection could not be established.
      */
-    public function connect()
+    public function connect(ConnectionOptions $options)
     {
         $errorNumber = null;
         $errorString = null;
 
-        $stream = @$this->isolator()->stream_socket_client(
+        $iso = $this->isolator();
+
+        $fd = @$iso->stream_socket_client(
             sprintf(
                 'tcp://%s:%s',
-                $this->options->host(),
-                $this->options->port()
+                $options->host(),
+                $options->port()
             ),
             $errorNumber,
             $errorString,
             STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT
         );
 
-        if (false === $stream) {
+        if (false === $fd) {
             return reject(
                 ConnectionException::couldNotConnect(
-                    $this->options,
+                    $options,
                     new RuntimeException(
                         $errorString,
                         $errorNumber
@@ -67,35 +69,36 @@ final class StreamConnector implements Connector
             );
         }
 
-        $this->isolator()->stream_set_blocking($stream, false);
+        $iso->stream_set_blocking($fd, false);
 
-        $stream = new SocketStream(
-            $stream,
+        $stream = $iso->new(
+            ReactStream::class,
+            $fd,
             $this->loop
         );
 
-        $handshake = new StreamHandshake(
+        $handshake = $iso->new(
+            StreamHandshake::class,
             $stream,
-            $this->options,
             $this->loop,
             $this->parser,
             $this->serializer
         );
 
         return $handshake
-            ->start()
-            ->then(function ($frames) use ($stream) {
+            ->start($options)
+            ->then(function ($frames) use ($iso, $stream, $options) {
                 list($startFrame, $tuneFrame) = $frames;
 
-                $transport = new StreamTransport(
+                $transport = $iso->new(
+                    StreamTransport::class,
                     $stream,
-                    $this->options,
                     $this->loop,
                     $this->parser,
                     $this->serializer
                 );
 
-                $transport->start($tuneFrame->heartbeat);
+                $transport->start($options, $tuneFrame->heartbeat);
 
                 return new Amqp091Connection(
                     $transport,
@@ -106,7 +109,6 @@ final class StreamConnector implements Connector
 
     use IsolatorTrait;
 
-    private $options;
     private $loop;
     private $parser;
     private $serializer;

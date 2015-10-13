@@ -19,27 +19,28 @@ use Recoil\Amqp\v091\Protocol\Connection\ConnectionTuneFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionTuneOkFrame;
 use Recoil\Amqp\v091\Protocol\FrameParser;
 use Recoil\Amqp\v091\Protocol\FrameSerializer;
+use Recoil\Amqp\v091\Protocol\Handshake;
 
 /**
  * Prepares a stream for use by StreamTransport by performing the AMQP handshake.
+ *
+ * The handshake is a stateful object that is discarded once the handshake is
+ * complete.
  */
-final class StreamHandshake
+final class StreamHandshake implements Handshake
 {
     /**
      * @param DuplexStreamInterface $stream     The stream to use for communication, typically a TCP connection.
-     * @param ConnectionOptions     $options    Connection options.
      * @param LoopInterface         $loop       The event loop used for the timeout timer.
      * @param FrameParser|null      $parser     The parser used to create AMQP frames from binary data, or null for the default.
      * @param FrameSerializer|null  $serializer The serialize used to create binary data from AMQP frames, or null for the default.
      */
     public function __construct(
         DuplexStreamInterface $stream,
-        ConnectionOptions $options,
         LoopInterface $loop,
         FrameParser $parser,
         FrameSerializer $serializer
     ) {
-        $this->options = $options;
         $this->stream = $stream;
         $this->loop = $loop;
         $this->parser = $parser;
@@ -50,18 +51,22 @@ final class StreamHandshake
     /**
      * Perform the AMQP handshake.
      *
+     * @param ConnectionOptions $options The options used when establishing the connection.
+     *
      * Via promise:
      * @return tuple<ConnectionStartFrame, ConnectionTuneFrame>
-     * @throws ConnectionException
-     * @throws ProtocolException
+     * @throws ConnectionException         If the handshake fails.
+     * @throws ProtocolException           If invalid data is received from the server.
      */
-    public function start()
+    public function start(ConnectionOptions $options)
     {
         if (self::STATE_SEND_HEADER !== $this->state) {
             throw new LogicException('The AMQP handshake has already been started.');
         } elseif (!$this->stream->isWritable()) {
             throw new LogicException('The stream is not writable.');
         }
+
+        $this->options = $options;
 
         // Create a timer that will abort the handshake if it is not completed
         // in time ...
@@ -289,23 +294,24 @@ final class StreamHandshake
      */
     const HANDSHAKE_TIMEOUT = 3;
 
+    /**
+     * The internal state of the handshake.
+     */
     const STATE_SEND_HEADER  = 0;
     const STATE_WAIT_START   = 1;
     const STATE_WAIT_TUNE    = 2;
     const STATE_WAIT_OPEN_OK = 3;
     const STATE_DONE         = 4; // done, either successful or not
 
-    const MAX_USER_CHANNELS = 0xfffe;     // 2-byte channel ID, but zero is reserved for connection-level communication.
+    /**
+     * Channel IDs are 2 bytes, but zero is reserved for connection-level communication.
+     */
+    const MAX_USER_CHANNELS = 0xffff - 1;
 
     /**
      * @var DuplexStreamInterface The stream to use for communication, typically a TCP connection.
      */
     private $stream;
-
-    /**
-     * @var ConnectionOptions
-     */
-    private $options;
 
     /**
      * @var FrameParser The parser used to create AMQP frames from binary data, or null for the default.

@@ -5,6 +5,7 @@ namespace Recoil\Amqp\v091\React;
 use Exception;
 use function React\Promise\resolve;
 use function React\Promise\Timer\timeout;
+use LogicException;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use React\Stream\DuplexStreamInterface;
@@ -30,20 +31,17 @@ final class StreamTransport implements Transport
 {
     /**
      * @param DuplexStreamInterface $stream     The stream to use for communication, typically a TCP connection.
-     * @param ConnectionOptions     $options    Connection options.
      * @param LoopInterface         $loop       The event loop used for the timeout timer.
      * @param FrameParser           $parser     The parser used to create AMQP frames from binary data, or null for the default.
      * @param FrameSerializer       $serializer The serialize used to create binary data from AMQP frames, or null for the default.
      */
     public function __construct(
         DuplexStreamInterface $stream,
-        ConnectionOptions $options,
         LoopInterface $loop,
         FrameParser $parser,
         FrameSerializer $serializer
     ) {
         $this->stream = $stream;
-        $this->options = $options;
         $this->loop = $loop;
         $this->parser = $parser;
         $this->serializer = $serializer;
@@ -54,9 +52,18 @@ final class StreamTransport implements Transport
 
     /**
      * Start the transport.
+     *
+     * @param ConnectionOptions $options           The options used when establishing the connection.
+     * @param integer           $heartbeatInterval The heartbeat interval, as negotiated during the AMQP handshake. May be lower than the value in the connection options.
      */
-    public function start($heartbeatInterval)
+    public function start(ConnectionOptions $options, $heartbeatInterval)
     {
+        if ($this->options) {
+            throw new LogicException('The transport has already been started.');
+        }
+
+        $this->options = $options;
+
         // Create time that triggers the heartbeat at regular intervals ...
         $this->heartbeatTimer = $this->loop->addPeriodicTimer(
             $heartbeatInterval,
@@ -332,7 +339,7 @@ final class StreamTransport implements Transport
     private $stream;
 
     /**
-     * @var ConnectionOptions
+     * @var ConnectionOptions|null
      */
     private $options;
 
