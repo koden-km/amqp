@@ -111,22 +111,15 @@ class StreamConnectorTest extends PHPUnit_Framework_TestCase
             $this->transport->start->calledWith($this->options, $this->tuneFrame->heartbeat)
         );
 
-        // Replace promise with actual result ...
-        $result->then(
-            function ($connection) use (&$result) {
-                $result = $connection;
-            },
-            function ($exception) {
-                throw $exception;
-            }
-        );
+        $then = Phony::stub();
+        $result->then($then);
 
         $this->assertEquals(
             new Amqp091Connection(
                 $this->transport->mock(),
                 $this->tuneFrame->channelMax
             ),
-            $result
+            $then->called()->argument(0)
         );
     }
 
