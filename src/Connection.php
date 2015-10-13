@@ -1,4 +1,5 @@
 <?php
+
 namespace Recoil\Amqp;
 
 use Evenement\EventEmitterInterface;

@@ -1,4 +1,5 @@
 <?php
+
 namespace Recoil\Amqp;
 
 use PHPUnit_Framework_TestCase;

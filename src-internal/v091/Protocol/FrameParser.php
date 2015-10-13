@@ -1,4 +1,5 @@
 <?php
+
 namespace Recoil\Amqp\v091\Protocol;
 
 use Recoil\Amqp\Exception\ProtocolException;
@@ -183,29 +184,29 @@ class FrameParser
 
         switch ($type) {
             // RabbitMQ deviations from spec ...
-            case "s": return $this->parseSignedInt16(); // spec: short-str
-            case "l": return $this->parseSignedInt64(); // spec: UNSIGNED 64-bit integer
-            case "x": return $this->parseByteArray();
+            case 's': return $this->parseSignedInt16(); // spec: short-str
+            case 'l': return $this->parseSignedInt64(); // spec: UNSIGNED 64-bit integer
+            case 'x': return $this->parseByteArray();
 
             // AMQP spec and RabbitMQ match ...
-            case "t": return $this->parseUnsignedInt8() !== 0;
-            case "b": return $this->parseSignedInt8();
-            case "I": return $this->parseSignedInt32();
-            case "f": return $this->parseFloat();
-            case "d": return $this->parseDouble();
-            case "D": return $this->parseDecimal();
-            case "S": return $this->parseLongString();
-            case "A": return $this->parseArray();
-            case "T": return $this->parseUnsignedInt64();
-            case "F": return $this->parseFieldTable();
-            case "V": return null;
+            case 't': return $this->parseUnsignedInt8() !== 0;
+            case 'b': return $this->parseSignedInt8();
+            case 'I': return $this->parseSignedInt32();
+            case 'f': return $this->parseFloat();
+            case 'd': return $this->parseDouble();
+            case 'D': return $this->parseDecimal();
+            case 'S': return $this->parseLongString();
+            case 'A': return $this->parseArray();
+            case 'T': return $this->parseUnsignedInt64();
+            case 'F': return $this->parseFieldTable();
+            case 'V': return null;
 
             // Unsupported by RabbitMQ ...
-            case "B": return $this->parseUnsignedInt8();
-            case "U": return $this->parseSignedInt16();
-            case "u": return $this->parseUnsignedInt16();
-            case "i": return $this->parseUnsignedInt32();
-            case "L": return $this->parseSignedInt64();
+            case 'B': return $this->parseUnsignedInt8();
+            case 'U': return $this->parseSignedInt16();
+            case 'u': return $this->parseUnsignedInt16();
+            case 'i': return $this->parseUnsignedInt32();
+            case 'L': return $this->parseSignedInt64();
         }
 
         throw ProtocolException::create(
@@ -241,7 +242,7 @@ class FrameParser
      */
     private function parseByteArray()
     {
-        list(, $length) = unpack("N", $this->buffer);
+        list(, $length) = unpack('N', $this->buffer);
         try {
             return substr($this->buffer, 4, $length);
         } finally {

@@ -1,7 +1,10 @@
 <?php
+
 namespace Recoil\Amqp\v091\React;
 
 use Exception;
+use function React\Promise\resolve;
+use function React\Promise\Timer\timeout;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use React\Stream\DuplexStreamInterface;
@@ -16,8 +19,6 @@ use Recoil\Amqp\v091\Protocol\FrameSerializer;
 use Recoil\Amqp\v091\Protocol\HeartbeatFrame;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 use Recoil\Amqp\v091\Protocol\Transport;
-use function React\Promise\Timer\timeout;
-use function React\Promise\resolve;
 
 /**
  * Send and receive AMQP frames via a React stream.
@@ -136,7 +137,7 @@ final class StreamTransport implements Transport
      * @param integer $channel The channel on which to wait, or null for any channel.
      *
      * Via promise:
-     * @return null      If the transport or channel is closed cleanly.
+     * @return null If the transport or channel is closed cleanly.
      * @notify IncomingFrame For each matching frame that is received, unless it was matched to a previous call to wait().
      * @throws Exception If the transport or channel is closed unexpectedly.
      */

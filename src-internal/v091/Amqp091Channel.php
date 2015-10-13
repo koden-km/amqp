@@ -1,4 +1,5 @@
 <?php
+
 namespace Recoil\Amqp\v091;
 
 use Recoil\Amqp\Channel;

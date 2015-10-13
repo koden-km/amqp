@@ -1,6 +1,8 @@
 <?php
+
 namespace Recoil\Amqp\v091\React;
 
+use function React\Promise\reject;
 use Icecave\Isolator\IsolatorTrait;
 use React\EventLoop\LoopInterface;
 use React\Socket\Connection as SocketStream;
@@ -12,7 +14,6 @@ use Recoil\Amqp\v091\Amqp091Connection;
 use Recoil\Amqp\v091\Protocol\FrameParser;
 use Recoil\Amqp\v091\Protocol\FrameSerializer;
 use RuntimeException;
-use function React\Promise\reject;
 
 /**
  * A connection to an AMQP server.

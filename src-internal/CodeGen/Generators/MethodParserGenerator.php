@@ -1,4 +1,5 @@
 <?php
+
 namespace Recoil\Amqp\CodeGen\Generators;
 
 use Recoil\Amqp\CodeGen\CodeGenerator;

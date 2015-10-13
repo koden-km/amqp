@@ -1,15 +1,16 @@
 <?php
+
 namespace Recoil\Amqp\v091;
 
-use Exception;
-use RuntimeException;
 use Evenement\EventEmitterTrait;
+use Exception;
+use function React\Promise\reject;
 use Recoil\Amqp\Connection;
 use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenFrame;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenOkFrame;
 use Recoil\Amqp\v091\Protocol\Transport;
-use function React\Promise\reject;
+use RuntimeException;
 
 /**
  * A connection to an AMQP server.

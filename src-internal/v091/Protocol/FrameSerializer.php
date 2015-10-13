@@ -1,4 +1,5 @@
 <?php
+
 namespace Recoil\Amqp\v091\Protocol;
 
 use Recoil\Amqp\v091\Debug;
@@ -45,7 +46,7 @@ final class FrameSerializer implements OutgoingFrameVisitor
 
     private function serializeLongString($value)
     {
-        return pack("N", strlen($value)) . $value;
+        return pack('N', strlen($value)) . $value;
     }
 
     private function serializeTable(array $table)

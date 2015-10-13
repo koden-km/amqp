@@ -1,4 +1,5 @@
 <?php
+
 namespace Recoil\Amqp\Exception;
 
 use Exception;
@@ -104,7 +105,7 @@ final class ConnectionException extends RuntimeException implements RecoilAmqpEx
         return new self(
             $options,
             sprintf(
-                'The AMQP connection with server [%s:%d] has timed out, no heartbeat received for over %d seconds.',
+                'The AMQP connection with server [%s:%d] has timed out, the last heartbeat was received over %d seconds ago.',
                 $options->host(),
                 $options->port(),
                 $heartbeatInterval

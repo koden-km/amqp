@@ -1,4 +1,5 @@
 <?php
+
 namespace Recoil\Amqp\Exception;
 
 use Exception;
@@ -67,7 +68,7 @@ class ConnectionExceptionTest extends PHPUnit_Framework_TestCase
         );
 
         $this->assertSame(
-            'The AMQP connection with server [localhost:5672] has timed out, no heartbeat received for over 580 seconds.',
+            'The AMQP connection with server [localhost:5672] has timed out, the last heartbeat was received over 580 seconds ago.',
             $exception->getMessage()
         );
 

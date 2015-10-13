@@ -1,4 +1,5 @@
 <?php
+
 namespace Recoil\Amqp\v091\Protocol;
 
 use Exception;
@@ -37,7 +38,7 @@ interface Transport
      * @param integer $channel The channel on which to wait, or null for any channel.
      *
      * Via promise:
-     * @return null      If the transport or channel is closed cleanly.
+     * @return null If the transport or channel is closed cleanly.
      * @notify IncomingFrame For each matching frame that is received, unless it was matched to a previous call to wait().
      * @throws Exception If the transport or channel is closed unexpectedly.
      */
