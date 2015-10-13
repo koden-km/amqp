@@ -1,6 +1,8 @@
 <?php
 namespace Recoil\Amqp\v091\Protocol;
 
+use Exception;
+
 /**
  * A transport facilitates sending and receiving AMQP frames.
  *

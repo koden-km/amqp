@@ -1,7 +1,7 @@
 <?php
 namespace Recoil\Amqp\v091\Protocol;
 
-use Recoil\Amqp\ProtocolException;
+use Recoil\Amqp\Exception\ProtocolException;
 use Recoil\Amqp\v091\Debug;
 
 /**

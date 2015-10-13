@@ -1,6 +1,10 @@
 <?php
 namespace Recoil\Amqp;
 
+use Recoil\Amqp\Exception\ConnectionException;
+use Recoil\Amqp\Exception\ResourceLockedException;
+use Recoil\Amqp\Exception\ResourceNotFoundException;
+
 /**
  * An AMQP queue.
  *

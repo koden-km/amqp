@@ -2,6 +2,7 @@
 namespace Recoil\Amqp;
 
 use Evenement\EventEmitterInterface;
+use Recoil\Amqp\Exception\ConnectionException;
 
 /**
  * A connection to an AMQP server.

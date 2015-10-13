@@ -1,6 +1,8 @@
 <?php
 namespace Recoil\Amqp;
 
+use Recoil\Amqp\Exception\ConnectionException;
+
 /**
  * A message consumer.
  */

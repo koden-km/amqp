@@ -1,8 +1,11 @@
 <?php
 namespace Recoil\Amqp\v091;
 
+use Exception;
+use RuntimeException;
 use Evenement\EventEmitterTrait;
 use Recoil\Amqp\Connection;
+use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenFrame;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenOkFrame;
 use Recoil\Amqp\v091\Protocol\Transport;

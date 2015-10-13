@@ -1,6 +1,8 @@
 <?php
 namespace Recoil\Amqp;
 
+use Recoil\Amqp\Exception\ConnectionException;
+
 /**
  * Establishes a connection to an AMQP server.
  */

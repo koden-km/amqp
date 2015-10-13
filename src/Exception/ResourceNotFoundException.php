@@ -1,5 +1,5 @@
 <?php
-namespace Recoil\Amqp;
+namespace Recoil\Amqp\Exception;
 
 use Exception;
 use RuntimeException;
@@ -7,7 +7,7 @@ use RuntimeException;
 /**
  * The client attempted to work with a server resource that no longer exists.
  */
-final class ResourceNotFoundException extends RuntimeException
+final class ResourceNotFoundException extends RuntimeException implements RecoilAmqpException
 {
     /**
      * A queue could not be found.

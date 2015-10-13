@@ -176,8 +176,6 @@ final class StreamTransport implements Transport
 
     /**
      * Check the heartbeat state.
-     *
-     * @access private
      */
     public function checkHeartbeat()
     {
@@ -199,8 +197,6 @@ final class StreamTransport implements Transport
 
     /**
      * Respond to data received from the stream.
-     *
-     * @access private
      *
      * @param string $data
      */
@@ -245,8 +241,6 @@ final class StreamTransport implements Transport
 
     /**
      * Respond to the stream being closed.
-     *
-     * @access private
      */
     public function streamClosed()
     {
@@ -261,8 +255,6 @@ final class StreamTransport implements Transport
 
     /**
      * Respond to an error from the stream.
-     *
-     * @access private
      *
      * @param Exception $exception
      */

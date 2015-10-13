@@ -1,5 +1,5 @@
 <?php
-namespace Recoil\Amqp;
+namespace Recoil\Amqp\Exception;
 
 use Exception;
 use RuntimeException;
@@ -8,7 +8,7 @@ use RuntimeException;
  * The client attempted to work with a server resource to which it has no access
  * because another connection is using it.
  */
-final class ResourceLockedException extends RuntimeException
+final class ResourceLockedException extends RuntimeException implements RecoilAmqpException
 {
     /**
      * A queue could not be declared because another connection has already

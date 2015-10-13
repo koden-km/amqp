@@ -3,6 +3,7 @@ namespace Recoil\Amqp\CodeGen\Generators;
 
 use Recoil\Amqp\CodeGen\CodeGenerator;
 use Recoil\Amqp\CodeGen\CodeGeneratorHelperTrait;
+use Recoil\Amqp\Exception\ProtocolException;
 
 final class MethodParserGenerator implements CodeGenerator
 {
@@ -32,6 +33,8 @@ final class MethodParserGenerator implements CodeGenerator
     {
         yield '<?php';
         yield 'namespace Recoil\Amqp\\' . $amqpVersion . '\Protocol;';
+        yield;
+        yield 'use ' . ProtocolException::class . ';';
         yield;
         yield 'trait FrameParserMethodTrait';
         yield '{';

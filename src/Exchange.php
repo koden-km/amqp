@@ -2,6 +2,7 @@
 namespace Recoil\Amqp;
 
 use InvalidArgumentException;
+use Recoil\Amqp\Exception\ConnectionException;
 
 /**
  * An AMQP exchange.

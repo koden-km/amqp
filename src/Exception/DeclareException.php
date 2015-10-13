@@ -1,5 +1,5 @@
 <?php
-namespace Recoil\Amqp;
+namespace Recoil\Amqp\Exception;
 
 use Exception;
 use RuntimeException;
@@ -7,7 +7,7 @@ use RuntimeException;
 /**
  * An error occured while attempting to declare an exchange or queue.
  */
-final class DeclareException extends RuntimeException
+final class DeclareException extends RuntimeException implements RecoilAmqpException
 {
     /**
      * Create an exception that indicates a failure to declare an exchange

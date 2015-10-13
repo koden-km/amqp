@@ -1,13 +1,13 @@
 <?php
-namespace Recoil\Amqp;
+namespace Recoil\Amqp\Exception;
 
 use Exception;
 use RuntimeException;
 
 /**
- * Data was received that violates the requirements of the AMQP protocol.
+ * Data was received that violates the AMQP protocol specification.
  */
-final class ProtocolException extends RuntimeException
+final class ProtocolException extends RuntimeException implements RecoilAmqpException
 {
     /**
      * Data was received that violates the requirements of the AMQP protocol.

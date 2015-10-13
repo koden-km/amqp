@@ -3,6 +3,9 @@ namespace Recoil\Amqp\v091;
 
 use Recoil\Amqp\Channel;
 use Recoil\Amqp\DeclareMode;
+use Recoil\Amqp\Exception\ConnectionException;
+use Recoil\Amqp\Exception\DeclareException;
+use Recoil\Amqp\Exception\ResourceLockedException;
 use Recoil\Amqp\ExchangeOptions;
 use Recoil\Amqp\ExchangeType;
 use Recoil\Amqp\QosScope;

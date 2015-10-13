@@ -1,6 +1,9 @@
 <?php
 namespace Recoil\Amqp;
 
+use Recoil\Amqp\Exception\ConnectionException;
+use Recoil\Amqp\Exception\DeclareException;
+use Recoil\Amqp\Exception\ResourceLockedException;
 
 /**
  * An AMQP channel.

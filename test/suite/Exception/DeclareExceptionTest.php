@@ -1,5 +1,5 @@
 <?php
-namespace Recoil\Amqp;
+namespace Recoil\Amqp\Exception;
 
 use Exception;
 use PHPUnit_Framework_TestCase;
