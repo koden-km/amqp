@@ -3,6 +3,7 @@
 namespace Recoil\Amqp\v091\React;
 
 use Eloquent\Phony\Phpunit\Phony;
+use function React\Promise\reject;
 use function React\Promise\resolve;
 use Icecave\Isolator\Isolator;
 use PHPUnit_Framework_TestCase;
@@ -10,6 +11,7 @@ use React\EventLoop\LoopInterface;
 use React\Socket\Connection as ReactStream;
 use React\Stream\DuplexStreamInterface;
 use Recoil\Amqp\ConnectionOptions;
+use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\v091\Amqp091Connection;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionStartFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionTuneFrame;
@@ -17,6 +19,7 @@ use Recoil\Amqp\v091\Protocol\FrameParser;
 use Recoil\Amqp\v091\Protocol\FrameSerializer;
 use Recoil\Amqp\v091\Protocol\Handshake;
 use Recoil\Amqp\v091\Protocol\Transport;
+use RuntimeException;
 
 class StreamConnectorTest extends PHPUnit_Framework_TestCase
 {
@@ -29,7 +32,7 @@ class StreamConnectorTest extends PHPUnit_Framework_TestCase
         $this->isolator = Phony::fullMock(Isolator::class);
 
         // Streams ...
-        $this->isolator->stream_socket_client->returns('<fd>');
+        $this->isolator->stream_socket_client->returns('<socket>');
         $this->reactStream = Phony::fullMock(DuplexStreamInterface::class);
         $this->isolator->new->with(ReactStream::class, '*')->returns(
             $this->reactStream->mock()
@@ -67,18 +70,21 @@ class StreamConnectorTest extends PHPUnit_Framework_TestCase
 
     public function testConnect()
     {
-        $result = $this->subject->connect($this->options);
+        $promise = $this->subject->connect($this->options);
 
         $this->isolator->stream_socket_client->calledWith(
             'tcp://localhost:5672',
             null,
             null,
+            5, // timeout - TODO pull from connection options
             STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT
         );
 
+        $this->isolator->stream_set_blocking->calledWith('<socket>', false);
+
         $this->isolator->new->calledWith(
             ReactStream::class,
-            '<fd>',
+            '<socket>',
             $this->loop->mock()
         );
 
@@ -111,25 +117,55 @@ class StreamConnectorTest extends PHPUnit_Framework_TestCase
             $this->transport->start->calledWith($this->options, $this->tuneFrame->heartbeat)
         );
 
-        $then = Phony::stub();
-        $result->then($then);
+        $stub = Phony::stub();
+        $promise->then($stub);
 
         $this->assertEquals(
             new Amqp091Connection(
                 $this->transport->mock(),
                 $this->tuneFrame->channelMax
             ),
-            $then->called()->argument(0)
+            $stub->called()->argument(0)
         );
     }
 
-    public function testWithConnectFailure()
+    public function testConnectWithSocketFailure()
     {
-        $this->markTestIncomplete();
+        $this->isolator->stream_socket_client
+            ->setsArgument(1, 123)
+            ->setsArgument(2, '<message>')
+            ->returns(false);
+
+        $promise = $this->subject->connect($this->options);
+
+        $this->isolator->new->never()->called();
+
+        $stub = Phony::stub();
+        $promise->otherwise($stub);
+
+        $this->assertEquals(
+            ConnectionException::couldNotConnect(
+                $this->options,
+                new RuntimeException('<message>', 123)
+            ),
+            $stub->called()->argument(0)
+        );
     }
 
-    public function testWithHandshakeFailure()
+    public function testConnectWithHandshakeFailure()
     {
-        $this->markTestIncomplete();
+        $exception = new RuntimeException('Handshake failure!');
+
+        $this->handshake->start->returns(
+            reject($exception)
+        );
+
+        $stub = Phony::stub();
+        $this->subject->connect($this->options)->otherwise($stub);
+
+        $this->assertSame(
+            $exception,
+            $stub->called()->argument(0)
+        );
     }
 }

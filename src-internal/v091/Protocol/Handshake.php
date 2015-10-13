@@ -7,6 +7,7 @@ use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\ProtocolException;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionStartFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionTuneFrame;
+
 /**
  * Perform the AMQP handshake.
  *

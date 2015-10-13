@@ -7,9 +7,9 @@ use Icecave\Isolator\IsolatorTrait;
 use React\EventLoop\LoopInterface;
 use React\Socket\Connection as ReactStream;
 use Recoil\Amqp\Connection;
-use Recoil\Amqp\ConnectionException;
 use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\Connector;
+use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\v091\Amqp091Connection;
 use Recoil\Amqp\v091\Protocol\FrameParser;
 use Recoil\Amqp\v091\Protocol\FrameSerializer;
@@ -41,39 +41,40 @@ final class StreamConnector implements Connector
      */
     public function connect(ConnectionOptions $options)
     {
-        $errorNumber = null;
-        $errorString = null;
+        $errorCode = null;
+        $errorMessage = null;
 
         $iso = $this->isolator();
 
-        $fd = @$iso->stream_socket_client(
+        $socket = @$iso->stream_socket_client(
             sprintf(
                 'tcp://%s:%s',
                 $options->host(),
                 $options->port()
             ),
-            $errorNumber,
-            $errorString,
+            $errorCode,
+            $errorMessage,
+            5, // connection timeout - TODO: pull from connection options
             STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT
         );
 
-        if (false === $fd) {
+        if (false === $socket) {
             return reject(
                 ConnectionException::couldNotConnect(
                     $options,
                     new RuntimeException(
-                        $errorString,
-                        $errorNumber
+                        $errorMessage,
+                        $errorCode
                     )
                 )
             );
         }
 
-        $iso->stream_set_blocking($fd, false);
+        $iso->stream_set_blocking($socket, false);
 
         $stream = $iso->new(
             ReactStream::class,
-            $fd,
+            $socket,
             $this->loop
         );
 

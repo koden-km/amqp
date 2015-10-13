@@ -4,7 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "7c492ebfc3c89eba9a3dfbdbc5a13d1f",
+    "hash": "59be02bcdad5d4f43f0fe208dea75b49",
+    "content-hash": "77ac21ee32c246f4191055bb5c7a34d0",
     "packages": [
         {
             "name": "eloquent/enumeration",
@@ -158,16 +159,16 @@
         },
         {
             "name": "icecave/isolator",
-            "version": "2.3.0",
+            "version": "3.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/IcecaveStudios/isolator.git",
-                "reference": "97c51fafa39c57a8f1a31f978a48fbe6cea4a5d5"
+                "reference": "8fad9e64c393238b01b359e01bd7f25dcdb818e4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/IcecaveStudios/isolator/zipball/97c51fafa39c57a8f1a31f978a48fbe6cea4a5d5",
-                "reference": "97c51fafa39c57a8f1a31f978a48fbe6cea4a5d5",
+                "url": "https://api.github.com/repos/IcecaveStudios/isolator/zipball/8fad9e64c393238b01b359e01bd7f25dcdb818e4",
+                "reference": "8fad9e64c393238b01b359e01bd7f25dcdb818e4",
                 "shasum": ""
             },
             "require": {
@@ -176,14 +177,19 @@
             "require-dev": {
                 "icecave/archer": "~1"
             },
-            "suggest": {
-                "eloquent/asplode": "Drop-in exception-based error handling."
-            },
             "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-develop": "3.0.x-dev"
+                }
+            },
             "autoload": {
                 "psr-4": {
                     "Icecave\\Isolator\\": "src"
-                }
+                },
+                "files": [
+                    "src/register-autoloader.php"
+                ]
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -199,14 +205,15 @@
             "description": "Dependency injection for global functions.",
             "homepage": "https://github.com/IcecaveStudios/isolator",
             "keywords": [
+                "Double",
                 "fake",
                 "mock",
-                "phake",
                 "phpunit",
+                "stub",
                 "test",
                 "unit"
             ],
-            "time": "2014-08-12 03:16:11"
+            "time": "2015-03-27 05:04:19"
         },
         {
             "name": "react/event-loop",
@@ -294,56 +301,6 @@
             ],
             "description": "A lightweight implementation of CommonJS Promises/A for PHP",
             "time": "2015-07-03 13:48:55"
-        },
-        {
-            "name": "react/promise-timer",
-            "version": "v1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/reactphp/promise-timer.git",
-                "reference": "a3b8c28c3bd5fb866790f338d64ccfbdee44d124"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/promise-timer/zipball/a3b8c28c3bd5fb866790f338d64ccfbdee44d124",
-                "reference": "a3b8c28c3bd5fb866790f338d64ccfbdee44d124",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3",
-                "react/event-loop": "~0.4.0|~0.3.0",
-                "react/promise": "~2.0|~1.1"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "React\\Promise\\Timer\\": "src/"
-                },
-                "files": [
-                    "src/functions.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Christian Lück",
-                    "email": "christian@lueck.tv"
-                }
-            ],
-            "description": "Trivial timeout implementation for Promises",
-            "homepage": "https://github.com/react/promise-timer",
-            "keywords": [
-                "async",
-                "event-loop",
-                "promise",
-                "reactphp",
-                "timeout",
-                "timer"
-            ],
-            "time": "2015-09-29 21:07:04"
         },
         {
             "name": "react/socket",
@@ -1787,16 +1744,16 @@
         },
         {
             "name": "twig/twig",
-            "version": "v1.22.2",
+            "version": "v1.22.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twigphp/Twig.git",
-                "reference": "79249fc8c9ff62e41e217e0c630e2e00bcadda6a"
+                "reference": "ebfc36b7e77b0c1175afe30459cf943010245540"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twigphp/Twig/zipball/79249fc8c9ff62e41e217e0c630e2e00bcadda6a",
-                "reference": "79249fc8c9ff62e41e217e0c630e2e00bcadda6a",
+                "url": "https://api.github.com/repos/twigphp/Twig/zipball/ebfc36b7e77b0c1175afe30459cf943010245540",
+                "reference": "ebfc36b7e77b0c1175afe30459cf943010245540",
                 "shasum": ""
             },
             "require": {
@@ -1844,7 +1801,7 @@
             "keywords": [
                 "templating"
             ],
-            "time": "2015-09-22 13:59:32"
+            "time": "2015-10-13 07:07:02"
         }
     ],
     "aliases": [],
