@@ -3,6 +3,9 @@
 namespace Recoil\Amqp\Exception;
 
 use Exception;
+use Recoil\Amqp\ExchangeOptions;
+use Recoil\Amqp\ExchangeType;
+use Recoil\Amqp\QueueOptions;
 use RuntimeException;
 
 /**

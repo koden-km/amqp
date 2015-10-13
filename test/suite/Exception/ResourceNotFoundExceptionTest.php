@@ -7,21 +7,35 @@ use PHPUnit_Framework_TestCase;
 
 class ResourceNotFoundExceptionTest extends PHPUnit_Framework_TestCase
 {
+    public function setUp()
+    {
+        $this->previous = new Exception();
+    }
+
     public function testQueueNotFound()
     {
-        $previous = new Exception();
         $exception = ResourceNotFoundException::queueNotFound(
             '<name>',
-            $previous
+            $this->previous
         );
+
+        $this->commonAssertions($exception);
 
         $this->assertSame(
             'Queue "<name>" does not exist.',
             $exception->getMessage()
         );
+    }
+
+    private function commonAssertions($exception)
+    {
+        $this->assertInstanceOf(
+            ResourceNotFoundException::class,
+            $exception
+        );
 
         $this->assertSame(
-            $previous,
+            $this->previous,
             $exception->getPrevious()
         );
     }

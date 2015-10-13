@@ -7,40 +7,50 @@ use PHPUnit_Framework_TestCase;
 
 class ResourceLockedExceptionTest extends PHPUnit_Framework_TestCase
 {
+    public function setUp()
+    {
+        $this->previous = new Exception();
+    }
+
     public function testQueueIsExclusive()
     {
-        $previous = new Exception();
         $exception = ResourceLockedException::queueIsExclusive(
             '<name>',
-            $previous
+            $this->previous
         );
+
+        $this->commonAssertions($exception);
 
         $this->assertSame(
             'Failed to declare queue "<name>", another connection has exclusive access.',
             $exception->getMessage()
         );
-
-        $this->assertSame(
-            $previous,
-            $exception->getPrevious()
-        );
     }
 
     public function testQueueHasExclusiveConsumer()
     {
-        $previous = new Exception();
         $exception = ResourceLockedException::queueHasExclusiveConsumer(
             '<name>',
-            $previous
+            $this->previous
         );
+
+        $this->commonAssertions($exception);
 
         $this->assertSame(
             'Failed to consume from queue "<name>", another connection has an exclusive consumer.',
             $exception->getMessage()
         );
+    }
+
+    private function commonAssertions($exception)
+    {
+        $this->assertInstanceOf(
+            ResourceLockedException::class,
+            $exception
+        );
 
         $this->assertSame(
-            $previous,
+            $this->previous,
             $exception->getPrevious()
         );
     }

@@ -26,7 +26,7 @@ class ConnectionExceptionTest extends PHPUnit_Framework_TestCase
             $exception->getMessage()
         );
 
-        $this->sharedAssertions($exception);
+        $this->commonAssertions($exception);
     }
 
     public function testAuthenticationFailed()
@@ -41,7 +41,7 @@ class ConnectionExceptionTest extends PHPUnit_Framework_TestCase
             $exception->getMessage()
         );
 
-        $this->sharedAssertions($exception);
+        $this->commonAssertions($exception);
     }
 
     public function testAuthorizationFailed()
@@ -56,7 +56,7 @@ class ConnectionExceptionTest extends PHPUnit_Framework_TestCase
             $exception->getMessage()
         );
 
-        $this->sharedAssertions($exception);
+        $this->commonAssertions($exception);
     }
 
     public function testHeartbeatTimedOut()
@@ -67,12 +67,12 @@ class ConnectionExceptionTest extends PHPUnit_Framework_TestCase
             $this->previous
         );
 
+        $this->commonAssertions($exception);
+
         $this->assertSame(
             'The AMQP connection with server [localhost:5672] has timed out, the last heartbeat was received over 580 seconds ago.',
             $exception->getMessage()
         );
-
-        $this->sharedAssertions($exception);
     }
 
     public function testClosedUnexpectedly()
@@ -82,16 +82,21 @@ class ConnectionExceptionTest extends PHPUnit_Framework_TestCase
             $this->previous
         );
 
+        $this->commonAssertions($exception);
+
         $this->assertSame(
             'The AMQP connection with server [localhost:5672] was closed unexpectedly.',
             $exception->getMessage()
         );
-
-        $this->sharedAssertions($exception);
     }
 
-    private function sharedAssertions(ConnectionException $exception)
+    private function commonAssertions($exception)
     {
+        $this->assertInstanceOf(
+            ConnectionException::class,
+            $exception
+        );
+
         $this->assertSame(
             $this->options,
             $exception->connectionOptions()
