@@ -21,7 +21,7 @@ final class ProtocolException extends RuntimeException implements RecoilAmqpExce
     public static function create($description, Exception $previous = null)
     {
         return new self(
-            'The AMQP server has sent invalid data ('  . rtrim($description, '.') . ').',
+            'The AMQP server has sent invalid data: '  . rtrim($description, '.') . '.',
             0,
             $previous
         );

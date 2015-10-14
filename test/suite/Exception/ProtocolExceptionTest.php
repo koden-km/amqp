@@ -22,7 +22,7 @@ class ProtocolExceptionTest extends PHPUnit_Framework_TestCase
         $this->commonAssertions($exception);
 
         $this->assertSame(
-            'The AMQP server has sent invalid data (<description>).',
+            'The AMQP server has sent invalid data: <description>.',
             $exception->getMessage()
         );
     }

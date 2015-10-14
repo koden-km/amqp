@@ -11,16 +11,16 @@ use Recoil\Amqp\ExchangeOptions;
 use Recoil\Amqp\ExchangeType;
 use Recoil\Amqp\QosScope;
 use Recoil\Amqp\QueueOptions;
-use Recoil\Amqp\v091\Protocol\Transport;
+use Recoil\Amqp\v091\Transport\ServerApi;
 
 /**
  * An AMQP channel.
  */
 final class Amqp091Channel implements Channel
 {
-    public function __construct(Transport $transport, $id)
+    public function __construct(ServerApi $serverApi, $id)
     {
-        $this->transport = $transport;
+        $this->serverApi = $serverApi;
         $this->id = $id;
     }
 
@@ -166,6 +166,6 @@ final class Amqp091Channel implements Channel
         throw new \LogicException('Not implemented.');
     }
 
-    private $transport;
+    private $serverApi;
     private $id;
 }

@@ -1,26 +1,16 @@
 <?php
 
-namespace Recoil\Amqp\v091\Protocol;
+namespace Recoil\Amqp\v091\Transport;
 
 use Exception;
-use Recoil\Amqp\ConnectionOptions;
+use Recoil\Amqp\v091\Protocol\IncomingFrame;
+use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 /**
- * A transport facilitates sending and receiving AMQP frames.
- *
- * Before frames can be transmitted the handshake must be completed. Heartbeat
- * frames are managed automatically by the transport.
+ * A high-level interface for frame-based communiation with an AMQP server.
  */
-interface Transport
+interface ServerApi
 {
-    /**
-     * Start the transport.
-     *
-     * @param ConnectionOptions $options           The options used when establishing the connection.
-     * @param integer           $heartbeatInterval The heartbeat interval, as negotiated during the AMQP handshake. May be lower than the value in the connection options.
-     */
-    public function start(ConnectionOptions $options, $heartbeatInterval);
-
     /**
      * Send a frame.
      *
@@ -52,9 +42,4 @@ interface Transport
      * @throws Exception If the transport or channel is closed unexpectedly.
      */
     public function listen($type, $channel = 0);
-
-    /**
-     * Close the transport cleanly via AMQP close negotation.
-     */
-    public function close();
 }
