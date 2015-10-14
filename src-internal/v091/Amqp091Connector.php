@@ -3,6 +3,7 @@
 namespace Recoil\Amqp\v091;
 
 use Exception;
+use function React\Promise\reject;
 use Icecave\Isolator\IsolatorTrait;
 use React\EventLoop\LoopInterface;
 use React\Stream\Stream;
@@ -13,7 +14,6 @@ use Recoil\Amqp\v091\Transport\ConnectionController;
 use Recoil\Amqp\v091\Transport\HandshakeController;
 use Recoil\Amqp\v091\Transport\StreamTransport;
 use RuntimeException;
-use function React\Promise\reject;
 
 /**
  * Establishes a connection to an AMQP server.
@@ -101,7 +101,7 @@ final class Amqp091Connector implements Connector
     /**
      * @param ConnectionOptions $options
      *
-     * @return tuple<resource, float> A 2-tuple containing the stream resource and the time taken to connect, in seconds.
+     * @return tuple<resource,     float> A 2-tuple containing the stream resource and the time taken to connect, in seconds.
      * @throws ConnectionException
      */
     private function openConnection(ConnectionOptions $options)

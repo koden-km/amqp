@@ -4,6 +4,7 @@ namespace Recoil\Amqp\v091;
 
 use Evenement\EventEmitterTrait;
 use Exception;
+use function React\Promise\reject;
 use Recoil\Amqp\Connection;
 use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenFrame;
@@ -11,7 +12,6 @@ use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenOkFrame;
 use Recoil\Amqp\v091\Protocol\Transport;
 use Recoil\Amqp\v091\Transport\ServerApi;
 use RuntimeException;
-use function React\Promise\reject;
 
 /**
  * A connection to an AMQP server.

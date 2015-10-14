@@ -11,7 +11,6 @@ use Recoil\Amqp\ExchangeOptions;
 use Recoil\Amqp\ExchangeType;
 use Recoil\Amqp\QosScope;
 use Recoil\Amqp\QueueOptions;
-use Recoil\Amqp\v091\Protocol\Transport;
 use Recoil\Amqp\v091\Transport\ServerApi;
 
 /**

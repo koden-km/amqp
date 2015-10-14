@@ -3,7 +3,6 @@
 namespace Recoil\Amqp;
 
 use Exception;
-use PHPUnit_Framework_TestCase;
 use React\Promise\PromiseInterface;
 use RuntimeException;
 
@@ -14,7 +13,7 @@ trait PromiseTestTrait
      *
      * @param PromiseInterface $promise
      *
-     * @return mixed The resolution value.
+     * @return mixed     The resolution value.
      * @throws Exception If the promise was not resolved.
      */
     public function assertResolved(PromiseInterface $promise)
@@ -52,10 +51,16 @@ trait PromiseTestTrait
      */
     public static function assertRejected(PromiseInterface $promise)
     {
-        try {
-            self::join($promise);
-        } catch (Exception $e) {
-            return $e;
+        $exception = null;
+
+        $promise->otherwise(
+            function ($e) use (&$exception) {
+                $exception = $e;
+            }
+        );
+
+        if ($exception) {
+            return $exception;
         }
 
         throw new RuntimeException('Promise was not rejected.');

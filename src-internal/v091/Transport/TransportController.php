@@ -4,8 +4,6 @@ namespace Recoil\Amqp\v091\Transport;
 
 use Exception;
 use React\Promise\PromiseInterface;
-use Recoil\Amqp\Exception\ConnectionException;
-use Recoil\Amqp\Exception\ProtocolException;
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
 
 /**

@@ -3,9 +3,9 @@
 namespace Recoil\Amqp\v091\Transport;
 
 use Exception;
+use function React\Promise\reject;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
-use React\Promise\PromiseInterface;
 use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\Exception\ProtocolException;
@@ -18,7 +18,6 @@ use Recoil\Amqp\v091\Protocol\Connection\ConnectionTuneFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionTuneOkFrame;
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
 use RuntimeException;
-use function React\Promise\reject;
 
 /**
  * A transport controller that completes the AMQP handshake.
@@ -26,9 +25,9 @@ use function React\Promise\reject;
 final class HandshakeController implements TransportController
 {
     /**
-     * @param LoopInterface        $loop    The event loop used for the handshake timeout timer.
-     * @param ConnectionOptions    $options The options used when establishing the connection.
-     * @param integer|float        $timeout The time (in seconds) to allow for the handshake to complete.
+     * @param LoopInterface     $loop    The event loop used for the handshake timeout timer.
+     * @param ConnectionOptions $options The options used when establishing the connection.
+     * @param integer|float     $timeout The time (in seconds) to allow for the handshake to complete.
      */
     public function __construct(
         LoopInterface $loop,
@@ -48,9 +47,9 @@ final class HandshakeController implements TransportController
      * @param Transport $transport The transport to manage.
      *
      * Via promise:
-     * @return HandshakeResult The result of a successful AMQP handshake.
+     * @return HandshakeResult      The result of a successful AMQP handshake.
      * @throws ConnnectionException If the handshake failed for any reason.
-     * @throws ProtocolException If the AMQP protocol was violated by the server.
+     * @throws ProtocolException    If the AMQP protocol was violated by the server.
      */
     public function start(Transport $transport)
     {
@@ -172,8 +171,7 @@ final class HandshakeController implements TransportController
         $pass = $this->options->password();
 
         $credentials = "\x05LOGINS"    . pack('N', strlen($user)) . $user
-                     . "\x08PASSWORDS" . pack('N', strlen($pass)) . $pass
-                     ;
+                     . "\x08PASSWORDS" . pack('N', strlen($pass)) . $pass;
 
         $this->transport->send(
             ConnectionStartOkFrame::create(

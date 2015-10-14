@@ -9,7 +9,6 @@ use LogicException;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Timer\TimerInterface;
 use React\Promise\Deferred;
-use React\Promise\PromiseInterface;
 use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\Exception\ProtocolException;
@@ -48,7 +47,7 @@ final class ConnectionController implements TransportController, ServerApi
      * Via promise:
      * @return ServerApi
      * @throws ConnnectionException If the handshake failed for any reason.
-     * @throws ProtocolException If the AMQP protocol was violated by the server.
+     * @throws ProtocolException    If the AMQP protocol was violated by the server.
      */
     public function start(Transport $transport)
     {
