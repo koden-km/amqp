@@ -22,23 +22,6 @@ final class FrameSerializer implements OutgoingFrameVisitor
         return $frame->acceptOutgoing($this);
     }
 
-    /**
-     * Serialize a username and password suitable for use in the "response"
-     * argument of a Start-Ok message when using AMQPLAIN authentication.
-     *
-     * @param string $username
-     * @param string $password
-     *
-     * @return string The binary serialized frame.
-     */
-    public function serializeAmqPlainCredentials($username, $password)
-    {
-        return $this->serializeShortString('LOGIN')
-             . 'S' . $this->serializeLongString($username)
-             . $this->serializeShortString('PASSWORD')
-             . 'S' . $this->serializeLongString($password);
-    }
-
     private function serializeShortString($value)
     {
         return chr(strlen($value)) . $value;

@@ -4,13 +4,14 @@ namespace Recoil\Amqp\v091;
 
 use Evenement\EventEmitterTrait;
 use Exception;
-use function React\Promise\reject;
 use Recoil\Amqp\Connection;
 use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenFrame;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenOkFrame;
 use Recoil\Amqp\v091\Protocol\Transport;
+use Recoil\Amqp\v091\Transport\ServerApi;
 use RuntimeException;
+use function React\Promise\reject;
 
 /**
  * A connection to an AMQP server.
@@ -21,11 +22,11 @@ final class Amqp091Connection implements Connection
      * @param Transport $transport           The transport used to communicate with the server.
      * @param integer   $maximumChannelCount The maximum number of channels, as negotiated during the AMQP handshake.
      */
-    public function __construct(Transport $transport, $maximumChannelCount)
+    public function __construct(ServerApi $serverApi)
     {
-        $this->transport = $transport;
+        $this->serverApi = $serverApi;
         $this->channels = [];
-        $this->maxChannelId = $maximumChannelCount + 1;
+        $this->maxChannelId = 0xffff;
         $this->nextChannelId = 1;
     }
 
@@ -49,14 +50,14 @@ final class Amqp091Connection implements Connection
             );
         }
 
-        $this->transport->send(
+        $this->serverApi->send(
             ChannelOpenFrame::create($id)
         );
 
-        $this->channels[$id] = new Amqp091Channel($this->transport, $id);
+        $this->channels[$id] = new Amqp091Channel($this->serverApi, $id);
 
         return $this
-            ->transport
+            ->serverApi
             ->wait(ChannelOpenOkFrame::class, $id)
             ->then(
                 function () use ($id) {
@@ -75,7 +76,7 @@ final class Amqp091Connection implements Connection
      */
     public function close()
     {
-        $this->transport->close();
+        $this->serverApi->close();
     }
 
     /**
