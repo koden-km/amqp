@@ -2,7 +2,7 @@
 
 namespace Recoil\Amqp;
 
-class PackageInfo
+final class PackageInfo
 {
     const NAME = 'Recoil AMQP';
     const VERSION = '0.0.0';

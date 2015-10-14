@@ -3,10 +3,9 @@
 namespace Recoil\Amqp\v091;
 
 use Exception;
-use function React\Promise\reject;
 use Icecave\Isolator\IsolatorTrait;
 use React\EventLoop\LoopInterface;
-use React\Socket\Connection as SocketConnection;
+use React\Stream\Stream;
 use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\Connector;
 use Recoil\Amqp\Exception\ConnectionException;
@@ -14,6 +13,7 @@ use Recoil\Amqp\v091\Transport\ConnectionController;
 use Recoil\Amqp\v091\Transport\HandshakeController;
 use Recoil\Amqp\v091\Transport\StreamTransport;
 use RuntimeException;
+use function React\Promise\reject;
 
 /**
  * Establishes a connection to an AMQP server.
@@ -50,7 +50,7 @@ final class Amqp091Connector implements Connector
 
         // Create a React stream from the raw PHP stream ...
         $stream = $iso->new(
-            SocketConnection::class,
+            Stream::class,
             $fd,
             $this->loop
         );
@@ -92,11 +92,8 @@ final class Amqp091Connector implements Connector
             // Connection controllers started successfully, give the caller
             // their connection ...
             ->then(
-                function ($serverApi) use ($iso) {
-                    return $iso->new(
-                        Amqp091Connection::class,
-                        $serverApi
-                    );
+                function ($serverApi) {
+                    return new Amqp091Connection($serverApi);
                 }
             );
     }

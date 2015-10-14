@@ -25,6 +25,8 @@ class StreamConnectorTest extends PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
+        $this->markTestSkipped();
+
         // Dependencies ...
         $this->loop = Phony::fullMock(LoopInterface::class);
         $this->parser = new FrameParser();
