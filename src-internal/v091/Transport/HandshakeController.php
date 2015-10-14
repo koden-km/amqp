@@ -60,7 +60,7 @@ final class HandshakeController implements TransportController
 
         $this->timer = $this->loop->addTimer(
             $this->timeout,
-            [$transport, 'close']
+            [$this, 'onTimeout']
         );
 
         $this->deferred = new Deferred(
@@ -127,6 +127,23 @@ final class HandshakeController implements TransportController
 
         $this->done();
         $this->deferred->reject($exception);
+    }
+
+    /**
+     * @access private
+     */
+    public function onTimeout()
+    {
+        $this->done();
+        $this->transport->close();
+        $this->deferred->reject(
+            ConnectionException::coultNotConnect(
+                $this->options,
+                new RuntimeException(
+                    'AMQP handshake timed out after ' . $this->options->timeout() . ' seconds.'
+                )
+            )
+        );
     }
 
     /**

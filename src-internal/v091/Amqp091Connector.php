@@ -2,7 +2,8 @@
 
 namespace Recoil\Amqp\v091;
 
-use function Recoil\Amqp\reject;
+use Exception;
+use function React\Promise\reject;
 use Icecave\Isolator\IsolatorTrait;
 use React\EventLoop\LoopInterface;
 use React\Socket\Connection as SocketConnection;
