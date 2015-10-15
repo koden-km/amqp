@@ -8,10 +8,12 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 /**
  * A connection to an AMQP server.
+ *
+ * @codeCoverageIgnore
  */
 final class Debug
 {
-    const ENABLED = true;
+    const ENABLED = false;
 
     public static function dumpOutgoingFrame(OutgoingFrame $frame)
     {
