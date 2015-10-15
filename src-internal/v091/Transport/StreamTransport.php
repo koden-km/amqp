@@ -8,6 +8,8 @@ use Recoil\Amqp\Exception\ProtocolException;
 use Recoil\Amqp\v091\Debug;
 use Recoil\Amqp\v091\Protocol\FrameParser;
 use Recoil\Amqp\v091\Protocol\FrameSerializer;
+use Recoil\Amqp\v091\Protocol\GeneratedFrameParser;
+use Recoil\Amqp\v091\Protocol\GeneratedFrameSerializer;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 /**
@@ -26,8 +28,8 @@ final class StreamTransport implements Transport
         FrameSerializer $serializer = null
     ) {
         $this->stream = $stream;
-        $this->parser = $parser ?: new FrameParser();
-        $this->serializer = $serializer ?: new FrameSerializer();
+        $this->parser = $parser ?: new GeneratedFrameParser();
+        $this->serializer = $serializer ?: new GeneratedFrameSerializer();
 
         $this->stream->pause();
     }
