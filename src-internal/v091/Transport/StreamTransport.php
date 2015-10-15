@@ -4,7 +4,6 @@ namespace Recoil\Amqp\v091\Transport;
 
 use Exception;
 use React\Stream\DuplexStreamInterface;
-use Recoil\Amqp\Exception\ProtocolException;
 use Recoil\Amqp\v091\Debug;
 use Recoil\Amqp\v091\Protocol\FrameParser;
 use Recoil\Amqp\v091\Protocol\FrameSerializer;
@@ -67,9 +66,11 @@ final class StreamTransport implements Transport
      */
     public function send(OutgoingFrame $frame)
     {
+        // @codeCoverageIgnoreStart
         if (Debug::ENABLED) {
             Debug::dumpOutgoingFrame($frame);
         }
+        // @codeCoverageIgnoreEnd
 
         $this->stream->write(
             $this->serializer->serialize($frame)
@@ -85,19 +86,25 @@ final class StreamTransport implements Transport
     }
 
     /**
+     * The stream 'data' event handler.
+     *
      * @access private
+     *
+     * @param string $buffer
      */
     public function onStreamData($buffer)
     {
         try {
             foreach ($this->parser->feed($buffer) as $frame) {
+                // @codeCoverageIgnoreStart
                 if (Debug::ENABLED) {
                     Debug::dumpIncomingFrame($frame);
                 }
+                // @codeCoverageIgnoreEnd
 
                 $this->controller->onFrame($frame);
             }
-        } catch (ProtocolException $e) {
+        } catch (Exception $e) {
             $this->controller->onTransportClosed($e);
             $this->controller = null;
             $this->stream->close();
@@ -105,6 +112,10 @@ final class StreamTransport implements Transport
     }
 
     /**
+     * The stream 'error' event handler.
+     *
+     * @param Exception $exception
+     *
      * @access private
      */
     public function onStreamError(Exception $exception)
@@ -114,6 +125,8 @@ final class StreamTransport implements Transport
     }
 
     /**
+     * The stream 'close' event handler.
+     *
      * @access private
      */
     public function onStreamClosed()
