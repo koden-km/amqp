@@ -10,16 +10,41 @@ namespace Recoil\Amqp\v091\Protocol;
  */
 final class GeneratedFrameSerializer implements FrameSerializer
 {
+    /**
+     * Serialize a string as an AMQP "short" string.
+     *
+     * 1-byte length, followed by UTF-8 string data.
+     *
+     * @param string $value The string to serialize.
+     *
+     * @return string The serialized string.
+     */
     private function serializeShortString($value)
     {
         return chr(strlen($value)) . $value;
     }
 
+    /**
+     * Serialize a string as an AMQP short string.
+     *
+     * 4-byte length, followed by UTF-8 string data.
+     *
+     * @param string $value The string to serialize.
+     *
+     * @return string The serialized string.
+     */
     private function serializeLongString($value)
     {
         return pack('N', strlen($value)) . $value;
     }
 
+    /**
+     * Serialize a data structure as an AMQP table.
+     *
+     * @param array<string, mixed> $table
+     *
+     * @return string The serialized table.
+     */
     private function serializeTable(array $table)
     {
         $buffer = '';
@@ -46,8 +71,16 @@ final class GeneratedFrameSerializer implements FrameSerializer
         return $this->serializeLongString($buffer);
     }
 
+    /**
+     * Serialize a heartbeat frame.
+     *
+     * @param HeartbeatFrame $frame The frame to serialize.
+     *
+     * @return string The serialized frame.
+     */
     private function serializeHeartbeatFrame(HeartbeatFrame $frame)
     {
+        // Cache the heartbeat frame buffer, as they can never differ ...
         if (null === self::$heartbeatBuffer) {
             self::$heartbeatBuffer = chr(Constants::FRAME_HEARTBEAT)
                                    . "\x00\x00" // channel
@@ -60,5 +93,8 @@ final class GeneratedFrameSerializer implements FrameSerializer
 
     use FrameSerializerTrait;
 
+    /**
+     * @var string The buffer for a serialized heartbeat frame.
+     */
     private static $heartbeatBuffer;
 }
