@@ -323,17 +323,20 @@ final class HandshakeController implements TransportController
     private $options;
 
     /**
-     * @var integer|float The time (in seconds) to allow for the handshake to complete.
+     * @var integer|float The time (in seconds) to allow for the handshake to
+     *                    complete.
      */
     private $timeout;
 
     /**
-     * @var HandshakeResult|null The result of the handshake.
+     * @var HandshakeResult The result of the handshake, as produced by start().
      */
     private $handshakeResult;
 
     /**
-     * @var integer The current state of the handshake (one of the self::STATE_* constants).
+     * @var integer The current state of the controller (one of the
+     *              self::STATE_* constants). Represents the progress of the
+     *              handshake.
      */
     private $state;
 
@@ -343,7 +346,8 @@ final class HandshakeController implements TransportController
     private $transport;
 
     /**
-     * @var Deferred|null The deferred object that is settled with the result of the handshake.
+     * @var Deferred|null The deferred object that is settled with the handshake
+     *                    result upon completion.
      */
     private $deferred;
 

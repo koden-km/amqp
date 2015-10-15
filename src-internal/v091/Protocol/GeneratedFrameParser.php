@@ -450,7 +450,23 @@ final class GeneratedFrameParser implements FrameParser
     // minimum size of a valid frame (header + end with no payload) ...
     const MINIMUM_FRAME_SIZE = self::HEADER_SIZE + 1; // end marker is always 1 byte
 
+    /**
+     * @var boolean True if the current machine uses little-endian byte-order.
+     */
     private $littleEndian;
+
+    /**
+     * @var integer The number of bytes required in the buffer to produce the
+     *              next frame.
+     *
+     * This value starts as MINIMUM_FRAME_SIZE and is increased to include the
+     * frame's payload size when the frame header becomes available.
+     */
     private $requiredBytes;
+
+    /**
+     * @var string A buffer containing incoming binary data that can not yet be
+     *             used to produce a frame.
+     */
     private $buffer;
 }

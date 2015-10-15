@@ -295,7 +295,7 @@ final class ConnectionController implements TransportController, ServerApi
     const STATE_CLOSED = 4;
 
     /**
-     * @var LoopInterface The event loop used for the heartbeat timer, if enabled.
+     * @var LoopInterface The event loop used for the heartbeat timer
      */
     private $loop;
 
@@ -305,22 +305,25 @@ final class ConnectionController implements TransportController, ServerApi
     private $options;
 
     /**
-     * @var HandshakeResult|null The result of the handshake.
+     * @var HandshakeResult The result of the AMQP handshake.
      */
     private $handshakeResult;
 
     /**
-     * @var integer The current state of the handshake (one of the self::STATE_* constants).
+     * @var integer The current state of the controller (one of the
+     *              self::STATE_* constants).
      */
     private $state;
 
     /**
-     * @var array<integer, array<string, Deferred>> A 2-dimensional array mapping channel/frame type to a queue of deferreds.
+     * @var array A 2-dimensional array mapping channel/frame type to a queue of
+     *            deferreds ($waiters[$channel][$frameType] === [$deferred, ...]).
      */
     private $waiters;
 
     /**
-     * @var array<integer, array<string, Deferred>> A 2-dimensional array mapping channel/frame to a sequence of deferreds.
+     * @var array A 2-dimensional array mapping channel/frame to a sequence of
+     *            deferreds ($waiters[$channel][$frameType] === [$deferred, ...]).
      */
     private $listeners;
 
@@ -335,12 +338,14 @@ final class ConnectionController implements TransportController, ServerApi
     private $timer;
 
     /**
-     * @var integer THe number of heartbeat ticks that have occurred since data was last sent.
+     * @var integer The number of heartbeat ticks that have occurred since data
+     *              was last sent to the server.
      */
     private $heartbeatsSinceLastSend;
 
     /**
-     * @var integer The number of heartbeat ticks that have occurred without data was last received.
+     * @var integer The number of heartbeat ticks that have occurred without
+     *              data was last received from the server.
      */
     private $heartbeatsSinceLastReceive;
 }
