@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Tx;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class TxCommitFrame implements OutgoingFrame
 {
@@ -16,10 +15,5 @@ final class TxCommitFrame implements OutgoingFrame
         $frame->channel = $channel;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingTxCommitFrame($this);
     }
 }

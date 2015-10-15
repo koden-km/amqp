@@ -2,9 +2,7 @@
 namespace Recoil\Amqp\v091\Protocol\Basic;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class BasicNackFrame implements IncomingFrame, OutgoingFrame
 {
@@ -27,14 +25,5 @@ final class BasicNackFrame implements IncomingFrame, OutgoingFrame
         $frame->requeue = null === $requeue ? true : $requeue;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingBasicNackFrame($this);
-    }
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingBasicNackFrame($this);
     }
 }

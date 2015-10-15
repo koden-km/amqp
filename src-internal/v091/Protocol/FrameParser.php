@@ -3,7 +3,6 @@
 namespace Recoil\Amqp\v091\Protocol;
 
 use Recoil\Amqp\Exception\ProtocolException;
-use Recoil\Amqp\v091\Debug;
 
 /**
  * Produces Frame objects from binary data.
@@ -115,10 +114,6 @@ final class FrameParser
             $this->requiredBytes = self::MINIMUM_FRAME_SIZE;
 
             $frame->channel = $fields['c'];
-
-            if (Debug::ENABLED) {
-                Debug::dumpIncomingFrame($frame);
-            }
 
             yield $frame;
         }
@@ -437,7 +432,7 @@ final class FrameParser
         }
     }
 
-    use FrameParserMethodTrait;
+    use FrameParserTrait;
 
     // the size of each portion of the header ...
     const HEADER_TYPE_SIZE           = 1; // header field "frame type" - unsigned octet

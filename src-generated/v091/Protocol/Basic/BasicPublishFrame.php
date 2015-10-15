@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Basic;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class BasicPublishFrame implements OutgoingFrame
 {
@@ -31,10 +30,5 @@ final class BasicPublishFrame implements OutgoingFrame
         $frame->immediate = null === $immediate ? false : $immediate;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingBasicPublishFrame($this);
     }
 }

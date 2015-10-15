@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Queue;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class QueueDeleteFrame implements OutgoingFrame
 {
@@ -31,10 +30,5 @@ final class QueueDeleteFrame implements OutgoingFrame
         $frame->nowait = null === $nowait ? false : $nowait;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingQueueDeleteFrame($this);
     }
 }

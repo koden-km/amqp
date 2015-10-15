@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Channel;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 
 final class ChannelOpenOkFrame implements IncomingFrame
 {
@@ -19,10 +18,5 @@ final class ChannelOpenOkFrame implements IncomingFrame
         $frame->channelId = null === $channelId ? '' : $channelId;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingChannelOpenOkFrame($this);
     }
 }

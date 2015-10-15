@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Confirm;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 
 final class ConfirmSelectOkFrame implements IncomingFrame
 {
@@ -16,10 +15,5 @@ final class ConfirmSelectOkFrame implements IncomingFrame
         $frame->channel = $channel;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingConfirmSelectOkFrame($this);
     }
 }

@@ -2,26 +2,8 @@
 
 namespace Recoil\Amqp\v091\Protocol;
 
-use Recoil\Amqp\v091\Debug;
-
-final class FrameSerializer implements OutgoingFrameVisitor
+final class FrameSerializer
 {
-    /**
-     * Serialize a frame, for transmission to the server.
-     *
-     * @param OutgoingFrame $frame The frame to serialize.
-     *
-     * @return string The binary serialized frame.
-     */
-    public function serialize(OutgoingFrame $frame)
-    {
-        if (Debug::ENABLED) {
-            Debug::dumpOutgoingFrame($frame);
-        }
-
-        return $frame->acceptOutgoing($this);
-    }
-
     private function serializeShortString($value)
     {
         return chr(strlen($value)) . $value;
@@ -58,7 +40,7 @@ final class FrameSerializer implements OutgoingFrameVisitor
         return $this->serializeLongString($buffer);
     }
 
-    public function visitOutgoingHeartbeatFrame(HeartbeatFrame $frame)
+    private function serializeHeartbeatFrame(HeartbeatFrame $frame)
     {
         if (null === self::$heartbeatBuffer) {
             self::$heartbeatBuffer = chr(Constants::FRAME_HEARTBEAT)
@@ -70,7 +52,7 @@ final class FrameSerializer implements OutgoingFrameVisitor
         return self::$heartbeatBuffer;
     }
 
-    use MethodSerializerTrait;
+    use FrameSerializerTrait;
 
     private static $heartbeatBuffer;
 }

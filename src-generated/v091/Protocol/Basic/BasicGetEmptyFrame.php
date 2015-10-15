@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Basic;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 
 final class BasicGetEmptyFrame implements IncomingFrame
 {
@@ -19,10 +18,5 @@ final class BasicGetEmptyFrame implements IncomingFrame
         $frame->clusterId = null === $clusterId ? '' : $clusterId;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingBasicGetEmptyFrame($this);
     }
 }

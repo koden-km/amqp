@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Queue;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 
 final class QueueDeleteOkFrame implements IncomingFrame
 {
@@ -19,10 +18,5 @@ final class QueueDeleteOkFrame implements IncomingFrame
         $frame->messageCount = $messageCount;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingQueueDeleteOkFrame($this);
     }
 }

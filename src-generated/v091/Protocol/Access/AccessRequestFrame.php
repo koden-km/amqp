@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Access;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class AccessRequestFrame implements OutgoingFrame
 {
@@ -34,10 +33,5 @@ final class AccessRequestFrame implements OutgoingFrame
         $frame->read = null === $read ? true : $read;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingAccessRequestFrame($this);
     }
 }

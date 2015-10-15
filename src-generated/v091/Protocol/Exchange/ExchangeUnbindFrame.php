@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Exchange;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class ExchangeUnbindFrame implements OutgoingFrame
 {
@@ -34,10 +33,5 @@ final class ExchangeUnbindFrame implements OutgoingFrame
         $frame->arguments = null === $arguments ? [] : $arguments;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingExchangeUnbindFrame($this);
     }
 }

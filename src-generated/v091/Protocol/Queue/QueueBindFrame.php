@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Queue;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class QueueBindFrame implements OutgoingFrame
 {
@@ -34,10 +33,5 @@ final class QueueBindFrame implements OutgoingFrame
         $frame->arguments = null === $arguments ? [] : $arguments;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingQueueBindFrame($this);
     }
 }

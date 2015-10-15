@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Connection;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class ConnectionSecureOkFrame implements OutgoingFrame
 {
@@ -19,10 +18,5 @@ final class ConnectionSecureOkFrame implements OutgoingFrame
         $frame->response = $response;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingConnectionSecureOkFrame($this);
     }
 }

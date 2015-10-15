@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Access;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 
 final class AccessRequestOkFrame implements IncomingFrame
 {
@@ -19,10 +18,5 @@ final class AccessRequestOkFrame implements IncomingFrame
         $frame->reserved1 = null === $reserved1 ? 1 : $reserved1;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingAccessRequestOkFrame($this);
     }
 }

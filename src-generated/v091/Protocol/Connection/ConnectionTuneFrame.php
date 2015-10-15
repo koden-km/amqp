@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Connection;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 
 final class ConnectionTuneFrame implements IncomingFrame
 {
@@ -25,10 +24,5 @@ final class ConnectionTuneFrame implements IncomingFrame
         $frame->heartbeat = null === $heartbeat ? 0 : $heartbeat;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingConnectionTuneFrame($this);
     }
 }

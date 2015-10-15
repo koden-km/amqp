@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Basic;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class BasicCancelFrame implements OutgoingFrame
 {
@@ -22,10 +21,5 @@ final class BasicCancelFrame implements OutgoingFrame
         $frame->nowait = null === $nowait ? false : $nowait;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingBasicCancelFrame($this);
     }
 }

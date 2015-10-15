@@ -3,7 +3,7 @@ namespace Recoil\Amqp\v091\Protocol;
 
 use Recoil\Amqp\Exception\ProtocolException;
 
-trait FrameParserMethodTrait
+trait FrameParserTrait
 {
     private function parseMethodFrame()
     {

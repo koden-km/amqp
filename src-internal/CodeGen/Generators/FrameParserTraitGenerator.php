@@ -6,7 +6,7 @@ use Recoil\Amqp\CodeGen\CodeGenerator;
 use Recoil\Amqp\CodeGen\CodeGeneratorHelperTrait;
 use Recoil\Amqp\Exception\ProtocolException;
 
-final class MethodParserGenerator implements CodeGenerator
+final class FrameParserTraitGenerator implements CodeGenerator
 {
     /**
      * Generate code based on the AMQP specification.
@@ -24,7 +24,7 @@ final class MethodParserGenerator implements CodeGenerator
      */
     public function generate($amqpVersion, $amqpSpec)
     {
-        yield 'FrameParserMethodTrait.php' => $this->generateTrait(
+        yield 'FrameParserTrait.php' => $this->generateTrait(
             $amqpVersion,
             $amqpSpec
         );
@@ -37,7 +37,7 @@ final class MethodParserGenerator implements CodeGenerator
         yield;
         yield 'use ' . ProtocolException::class . ';';
         yield;
-        yield 'trait FrameParserMethodTrait';
+        yield 'trait FrameParserTrait';
         yield '{';
         yield '    private function parseMethodFrame()';
         yield '    {';

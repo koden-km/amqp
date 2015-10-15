@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Connection;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class ConnectionStartOkFrame implements OutgoingFrame
 {
@@ -28,10 +27,5 @@ final class ConnectionStartOkFrame implements OutgoingFrame
         $frame->locale = null === $locale ? 'en_US' : $locale;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingConnectionStartOkFrame($this);
     }
 }

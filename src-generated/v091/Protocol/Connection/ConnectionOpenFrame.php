@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Connection;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class ConnectionOpenFrame implements OutgoingFrame
 {
@@ -25,10 +24,5 @@ final class ConnectionOpenFrame implements OutgoingFrame
         $frame->insist = null === $insist ? false : $insist;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingConnectionOpenFrame($this);
     }
 }

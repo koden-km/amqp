@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Connection;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 
 final class ConnectionBlockedFrame implements IncomingFrame
 {
@@ -19,10 +18,5 @@ final class ConnectionBlockedFrame implements IncomingFrame
         $frame->reason = null === $reason ? '' : $reason;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingConnectionBlockedFrame($this);
     }
 }

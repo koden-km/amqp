@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Basic;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class BasicQosFrame implements OutgoingFrame
 {
@@ -25,10 +24,5 @@ final class BasicQosFrame implements OutgoingFrame
         $frame->global = null === $global ? false : $global;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingBasicQosFrame($this);
     }
 }

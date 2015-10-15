@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Basic;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class BasicRejectFrame implements OutgoingFrame
 {
@@ -22,10 +21,5 @@ final class BasicRejectFrame implements OutgoingFrame
         $frame->requeue = null === $requeue ? true : $requeue;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingBasicRejectFrame($this);
     }
 }

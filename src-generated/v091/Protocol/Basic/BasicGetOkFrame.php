@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Basic;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 
 final class BasicGetOkFrame implements IncomingFrame
 {
@@ -31,10 +30,5 @@ final class BasicGetOkFrame implements IncomingFrame
         $frame->messageCount = $messageCount;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingBasicGetOkFrame($this);
     }
 }

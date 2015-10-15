@@ -52,13 +52,11 @@ final class MethodFrameGenerator implements CodeGenerator
 
         if ($this->isIncomingMethod($method)) {
             yield 'use Recoil\Amqp\\' . $amqpVersion . '\Protocol\IncomingFrame;';
-            yield 'use Recoil\Amqp\\' . $amqpVersion . '\Protocol\IncomingFrameVisitor;';
             $interfaces[] = 'IncomingFrame';
         }
 
         if ($this->isOutgoingMethod($method)) {
             yield 'use Recoil\Amqp\\' . $amqpVersion . '\Protocol\OutgoingFrame;';
-            yield 'use Recoil\Amqp\\' . $amqpVersion . '\Protocol\OutgoingFrameVisitor;';
             $interfaces[] = 'OutgoingFrame';
         }
 
@@ -108,22 +106,6 @@ final class MethodFrameGenerator implements CodeGenerator
         yield;
         yield '        return $frame;';
         yield '    }';
-        yield;
-
-        if ($this->isIncomingMethod($method)) {
-            yield '    public function acceptIncoming(IncomingFrameVisitor $visitor)';
-            yield '    {';
-            yield '        return $visitor->visitIncoming' . $className . '($this);';
-            yield '    }';
-        }
-
-        if ($this->isOutgoingMethod($method)) {
-            yield '    public function acceptOutgoing(OutgoingFrameVisitor $visitor)';
-            yield '    {';
-            yield '        return $visitor->visitOutgoing' . $className . '($this);';
-            yield '    }';
-        }
-
         yield '}';
     }
 

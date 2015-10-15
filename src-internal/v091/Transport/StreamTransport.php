@@ -5,6 +5,7 @@ namespace Recoil\Amqp\v091\Transport;
 use Exception;
 use React\Stream\DuplexStreamInterface;
 use Recoil\Amqp\Exception\ProtocolException;
+use Recoil\Amqp\v091\Debug;
 use Recoil\Amqp\v091\Protocol\FrameParser;
 use Recoil\Amqp\v091\Protocol\FrameSerializer;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
@@ -64,6 +65,10 @@ final class StreamTransport implements Transport
      */
     public function send(OutgoingFrame $frame)
     {
+        if (Debug::ENABLED) {
+            Debug::dumpOutgoingFrame($frame);
+        }
+
         $this->stream->write(
             $this->serializer->serialize($frame)
         );
@@ -84,6 +89,10 @@ final class StreamTransport implements Transport
     {
         try {
             foreach ($this->parser->feed($buffer) as $frame) {
+                if (Debug::ENABLED) {
+                    Debug::dumpIncomingFrame($frame);
+                }
+
                 $this->controller->onFrame($frame);
             }
         } catch (ProtocolException $e) {

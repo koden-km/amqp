@@ -5,7 +5,7 @@ namespace Recoil\Amqp\CodeGen\Generators;
 use Recoil\Amqp\CodeGen\CodeGenerator;
 use Recoil\Amqp\CodeGen\CodeGeneratorHelperTrait;
 
-final class MethodSerializerGenerator implements CodeGenerator
+final class FrameSerializerTraitGenerator implements CodeGenerator
 {
     /**
      * Generate code based on the AMQP specification.
@@ -23,7 +23,7 @@ final class MethodSerializerGenerator implements CodeGenerator
      */
     public function generate($amqpVersion, $amqpSpec)
     {
-        yield 'MethodSerializerTrait.php' => $this->generateTrait(
+        yield 'FrameSerializerTrait.php' => $this->generateTrait(
             $amqpVersion,
             $amqpSpec
         );
@@ -34,8 +34,12 @@ final class MethodSerializerGenerator implements CodeGenerator
         yield '<?php';
         yield 'namespace Recoil\Amqp\\' . $amqpVersion . '\Protocol;';
         yield;
-        yield 'trait MethodSerializerTrait';
+        yield 'trait FrameSerializerTrait';
         yield '{';
+        yield '    public function serialize(OutgoingFrame $frame)';
+        yield '    {';
+        yield '        if ($frame instanceof HeartbeatFrame) {';
+        yield '            return $this->serializeHeartbeatFrame();';
 
         foreach ($amqpSpec->classes as $class) {
             foreach ($class->methods as $method) {
@@ -44,21 +48,43 @@ final class MethodSerializerGenerator implements CodeGenerator
                     $bumpyMethod = $this->toBumpyCase($method->name);
 
                     yield sprintf(
-                        '    public function visitOutgoing%s%sFrame(%s\\%s%sFrame $frame)',
-                        $bumpyClass,
-                        $bumpyMethod,
+                        '        } elseif ($frame instanceof %s\\%s%sFrame) {',
                         $bumpyClass,
                         $bumpyClass,
                         $bumpyMethod
                     );
 
-                    yield '    {';
                     yield $this->generateMethodSerializerCode($amqpSpec, $class, $method);
-                    yield '    }';
-                    yield;
                 }
             }
         }
+
+        yield '        }';
+        yield '    }';
+        // yield;
+
+        // foreach ($amqpSpec->classes as $class) {
+        //     foreach ($class->methods as $method) {
+        //         if ($this->isOutgoingMethod($method)) {
+        //             $bumpyClass = $this->toBumpyCase($class->name);
+        //             $bumpyMethod = $this->toBumpyCase($method->name);
+
+        //             yield sprintf(
+        //                 '    private function serialize%s%sFrame(%s\\%s%sFrame $frame)',
+        //                 $bumpyClass,
+        //                 $bumpyMethod,
+        //                 $bumpyClass,
+        //                 $bumpyClass,
+        //                 $bumpyMethod
+        //             );
+
+        //             yield '    {';
+        //             yield $this->generateMethodSerializerCode($amqpSpec, $class, $method);
+        //             yield '    }';
+        //             yield;
+        //         }
+        //     }
+        // }
 
         yield '}';
     }
@@ -78,7 +104,7 @@ final class MethodSerializerGenerator implements CodeGenerator
                 $this->getConstant($amqpSpec, 'FRAME-END')
             );
 
-            yield '        return ' . $methodType . ' . pack("n", $frame->channel) . ' . $this->generateLiteralBuffer($buffer) . ';';
+            yield '            return ' . $methodType . ' . pack("n", $frame->channel) . ' . $this->generateLiteralBuffer($buffer) . ';';
 
             return;
         }
@@ -86,7 +112,7 @@ final class MethodSerializerGenerator implements CodeGenerator
         $this->bitArgs = [];
         $this->fixedArgs = [];
 
-        yield '        $payload = ' . $this->generateLiteralBuffer(pack('nn', $class->id, $method->id));
+        yield '            $payload = ' . $this->generateLiteralBuffer(pack('nn', $class->id, $method->id));
 
         foreach ($method->arguments as $argument) {
             $type = $this->resolveArgumentType($amqpSpec, $argument);
@@ -106,11 +132,11 @@ final class MethodSerializerGenerator implements CodeGenerator
             }
 
             if ($type === 'shortstr') {
-                yield '                 . $this->serializeShortString($frame->' . $this->toCamelCase($argument->name) . ')';
+                yield '                     . $this->serializeShortString($frame->' . $this->toCamelCase($argument->name) . ')';
             } elseif ($type === 'longstr') {
-                yield '                 . $this->serializeLongString($frame->' . $this->toCamelCase($argument->name) . ')';
+                yield '                     . $this->serializeLongString($frame->' . $this->toCamelCase($argument->name) . ')';
             } elseif ($type === 'table') {
-                yield '                 . $this->serializeTable($frame->' . $this->toCamelCase($argument->name) . ')';
+                yield '                     . $this->serializeTable($frame->' . $this->toCamelCase($argument->name) . ')';
             } else {
                 throw new RuntimeException('Unknown type: ' . $type . '.');
             }
@@ -118,14 +144,14 @@ final class MethodSerializerGenerator implements CodeGenerator
 
         yield $this->flushBitArgs();
         yield $this->flushFixedArgs($amqpSpec);
-        yield '                 ;';
+        yield '                     ;';
 
         $frameEnd = $this->generateLiteralBuffer(
             chr($this->getConstant($amqpSpec, 'FRAME-END'))
         );
 
         yield;
-        yield '        return ' . $methodType . ' . pack("nN", $frame->channel, strlen($payload)) . $payload . ' . $frameEnd . ';';
+        yield '            return ' . $methodType . ' . pack("nN", $frame->channel, strlen($payload)) . $payload . ' . $frameEnd . ';';
     }
 
     private function flushBitArgs()
@@ -134,20 +160,20 @@ final class MethodSerializerGenerator implements CodeGenerator
         $this->bitArgs = [];
 
         if (1 === count($arguments)) {
-            yield '                 . ($frame->' . $this->toCamelCase($arguments[0]->name) . ' ? "\x01" : "\x00")';
+            yield '                     . ($frame->' . $this->toCamelCase($arguments[0]->name) . ' ? "\x01" : "\x00")';
         } elseif ($arguments) {
             foreach (array_chunk($arguments, 8) as $args) {
-                yield '                 . chr(';
+                yield '                     . chr(';
 
                 foreach ($args as $index => $argument) {
                     if ($index === 0) {
-                        yield '                       $frame->' . $this->toCamelCase($argument->name);
+                        yield '                           $frame->' . $this->toCamelCase($argument->name);
                     } else {
-                        yield '                     | $frame->' . $this->toCamelCase($argument->name) . ' << ' . $index;
+                        yield '                         | $frame->' . $this->toCamelCase($argument->name) . ' << ' . $index;
                     }
                 }
 
-                yield '                 )';
+                yield '                     )';
             }
         }
     }
@@ -165,9 +191,9 @@ final class MethodSerializerGenerator implements CodeGenerator
             $name     = $this->toCamelCase($argument->name);
 
             if ($format === 'C') {
-                yield '                 . chr($frame->' . $name . ')';
+                yield '                     . chr($frame->' . $name . ')';
             } else {
-                yield '                 . pack(' . var_export($format, true) . ', $frame->' . $name . ')';
+                yield '                     . pack(' . var_export($format, true) . ', $frame->' . $name . ')';
             }
         } elseif ($arguments) {
             $size    = 0;
@@ -185,7 +211,7 @@ final class MethodSerializerGenerator implements CodeGenerator
             $format = implode('', $format);
             $names = '$frame->' . implode(', $frame->', $names);
 
-            yield '                 . pack(' . var_export($format, true) . ', ' . $names . ')';
+            yield '                     . pack(' . var_export($format, true) . ', ' . $names . ')';
         }
     }
 

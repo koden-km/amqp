@@ -11,10 +11,9 @@ final class CodeGeneratorEngine
     {
         $this->generators = [
             new Generators\ConstantsGenerator(),
-            new Generators\FrameVisitorGenerator(),
+            new Generators\FrameParserTraitGenerator(),
+            new Generators\FrameSerializerTraitGenerator(),
             new Generators\MethodFrameGenerator(),
-            new Generators\MethodParserGenerator(),
-            new Generators\MethodSerializerGenerator(),
         ];
     }
 

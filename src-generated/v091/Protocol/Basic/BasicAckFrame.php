@@ -2,9 +2,7 @@
 namespace Recoil\Amqp\v091\Protocol\Basic;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class BasicAckFrame implements IncomingFrame, OutgoingFrame
 {
@@ -24,14 +22,5 @@ final class BasicAckFrame implements IncomingFrame, OutgoingFrame
         $frame->multiple = null === $multiple ? false : $multiple;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingBasicAckFrame($this);
-    }
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingBasicAckFrame($this);
     }
 }

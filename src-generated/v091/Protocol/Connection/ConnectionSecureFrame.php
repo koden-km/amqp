@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Connection;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 
 final class ConnectionSecureFrame implements IncomingFrame
 {
@@ -19,10 +18,5 @@ final class ConnectionSecureFrame implements IncomingFrame
         $frame->challenge = $challenge;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingConnectionSecureFrame($this);
     }
 }

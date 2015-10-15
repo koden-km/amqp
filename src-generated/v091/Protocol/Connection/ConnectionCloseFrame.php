@@ -2,9 +2,7 @@
 namespace Recoil\Amqp\v091\Protocol\Connection;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class ConnectionCloseFrame implements IncomingFrame, OutgoingFrame
 {
@@ -30,14 +28,5 @@ final class ConnectionCloseFrame implements IncomingFrame, OutgoingFrame
         $frame->methodId = $methodId;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingConnectionCloseFrame($this);
-    }
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingConnectionCloseFrame($this);
     }
 }

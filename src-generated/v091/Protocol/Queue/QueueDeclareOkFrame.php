@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Queue;
 
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\IncomingFrameVisitor;
 
 final class QueueDeclareOkFrame implements IncomingFrame
 {
@@ -25,10 +24,5 @@ final class QueueDeclareOkFrame implements IncomingFrame
         $frame->consumerCount = $consumerCount;
 
         return $frame;
-    }
-
-    public function acceptIncoming(IncomingFrameVisitor $visitor)
-    {
-        return $visitor->visitIncomingQueueDeclareOkFrame($this);
     }
 }

@@ -2,7 +2,6 @@
 namespace Recoil\Amqp\v091\Protocol\Queue;
 
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrameVisitor;
 
 final class QueuePurgeFrame implements OutgoingFrame
 {
@@ -25,10 +24,5 @@ final class QueuePurgeFrame implements OutgoingFrame
         $frame->nowait = null === $nowait ? false : $nowait;
 
         return $frame;
-    }
-
-    public function acceptOutgoing(OutgoingFrameVisitor $visitor)
-    {
-        return $visitor->visitOutgoingQueuePurgeFrame($this);
     }
 }
