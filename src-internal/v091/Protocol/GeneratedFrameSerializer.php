@@ -13,7 +13,7 @@ final class GeneratedFrameSerializer implements FrameSerializer
     /**
      * Serialize a string as an AMQP "short" string.
      *
-     * 1-byte length, followed by UTF-8 string data.
+     * 1-byte length (in bytes), followed by UTF-8 string data.
      *
      * @param string $value The string to serialize.
      *
@@ -27,7 +27,7 @@ final class GeneratedFrameSerializer implements FrameSerializer
     /**
      * Serialize a string as an AMQP short string.
      *
-     * 4-byte length, followed by UTF-8 string data.
+     * 4-byte length (in bytes), followed by UTF-8 string data.
      *
      * @param string $value The string to serialize.
      *
