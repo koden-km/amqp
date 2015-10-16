@@ -2,15 +2,12 @@
 
 namespace Recoil\Amqp;
 
-use Evenement\EventEmitterInterface;
 use Recoil\Amqp\Exception\ConnectionException;
 
 /**
  * A connection to an AMQP server.
- *
- * @event "close" if AMQP connection is closed.
  */
-interface Connection extends EventEmitterInterface
+interface Connection
 {
     /**
      * Create a new AMQP channel.

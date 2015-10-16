@@ -2,7 +2,6 @@
 
 namespace Recoil\Amqp\v091;
 
-use Evenement\EventEmitterTrait;
 use Exception;
 use function React\Promise\reject;
 use Recoil\Amqp\Connection;
@@ -14,7 +13,7 @@ use Recoil\Amqp\v091\Transport\ServerApi;
 use RuntimeException;
 
 /**
- * A connection to an AMQP server.
+ * A connection to an AMQP server that uses AMQP v0.9.1.
  */
 final class Amqp091Connection implements Connection
 {
@@ -109,8 +108,6 @@ final class Amqp091Connection implements Connection
     {
         unset($this->channels[$id]);
     }
-
-    use EventEmitterTrait;
 
     private $transport;
     private $channels;
