@@ -33,9 +33,9 @@
         "react/stream": "^0.4.3"
     },
     "require-dev": {
+        "eloquent/asplode": "^2",
         "eloquent/phony": "^0.3",
-        "icecave/archer": "~1",
-        "eloquent/asplode": "^2"
+        "icecave/archer": "~1"
     },
     "autoload": {
         "psr-4": {
