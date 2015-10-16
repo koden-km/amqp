@@ -179,6 +179,16 @@ final class ConnectionController implements TransportController, ServerApi
     }
 
     /**
+     * Get the server capabilities.
+     *
+     * @return ServerCapabilities
+     */
+    public function capabilities()
+    {
+        throw new LogicException('Not implemented.');
+    }
+
+    /**
      * Notify the controller of an incoming frame.
      *
      * @param IncomingFrame $frame The received frame.

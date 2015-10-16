@@ -64,4 +64,11 @@ interface ServerApi
      * @throws Exception [via promise] If the transport or channel is closed unexpectedly.
      */
     public function listen($type, $channel = 0);
+
+    /**
+     * Get the server capabilities.
+     *
+     * @return ServerCapabilities
+     */
+    public function capabilities();
 }
