@@ -15,9 +15,8 @@ interface Connection extends EventEmitterInterface
     /**
      * Create a new AMQP channel.
      *
-     * Via promise:
-     * @return Channel             The newly created channel.
-     * @throws ConnectionException if not connected to the AMQP server.
+     * @return Channel             [via promise] The newly created channel.
+     * @throws ConnectionException [via promise] If not connected to the AMQP server.
      */
     public function channel();
 

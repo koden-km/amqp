@@ -25,9 +25,12 @@ use RuntimeException;
 final class HandshakeController implements TransportController
 {
     /**
-     * @param LoopInterface     $loop    The event loop used for the handshake timeout timer.
-     * @param ConnectionOptions $options The options used when establishing the connection.
-     * @param integer|float     $timeout The time (in seconds) to allow for the handshake to complete.
+     * @param LoopInterface     $loop    The event loop used for the handshake
+     *                                   timeout timer.
+     * @param ConnectionOptions $options The options used when establishing the
+     *                                   connection.
+     * @param integer|float     $timeout The time (in seconds) to allow for the
+     *                                   handshake to complete.
      */
     public function __construct(
         LoopInterface $loop,
@@ -42,14 +45,15 @@ final class HandshakeController implements TransportController
     }
 
     /**
-     * Begin managing a transport.
+     * Start the handshake process.
      *
      * @param Transport $transport The transport to manage.
      *
-     * Via promise:
-     * @return HandshakeResult      The result of a successful AMQP handshake.
-     * @throws ConnnectionException If the handshake failed for any reason.
-     * @throws ProtocolException    If the AMQP protocol was violated by the server.
+     * @return mixed          [via promise] If the controller's work is completed
+     *                        successfully (implementation defined).
+     * @throws Exception      [via promise] If the controller encounters an error
+     *                        (implementation defined).
+     * @throws LogicException If the controller has been started previously.
      */
     public function start(Transport $transport)
     {
@@ -77,7 +81,10 @@ final class HandshakeController implements TransportController
     /**
      * Notify the controller of an incoming frame.
      *
-     * @param IncomingFrame $frame
+     * @param IncomingFrame $frame The received frame.
+     *
+     * @throws Exception The implementation may throw any exception, which closes
+     *                   the transport.
      */
     public function onFrame(IncomingFrame $frame)
     {
@@ -262,8 +269,8 @@ final class HandshakeController implements TransportController
     const MAX_CHANNELS = 0xffff - 1;
 
     /**
-     * The sends channelMax of zero in the tune frame if it does not impose a
-     * channel limit.
+     * The servrer sends channelMax of zero in the tune frame if it does not impose
+     * a channel limit.
      */
     const UNLIMITED_CHANNELS = 0;
 
@@ -276,8 +283,8 @@ final class HandshakeController implements TransportController
     const MAX_FRAME_SIZE = 0x80000; // 512 KB
 
     /**
-     * The server frameMax of zero in the tune frame if it does not impose a
-     * frame size limit.
+     * The server sends frameMax of zero in the tune frame if it does not impose
+     * a frame size limit.
      */
     const UNLIMITED_FRAME_SIZE = 0;
 
@@ -334,9 +341,8 @@ final class HandshakeController implements TransportController
     private $handshakeResult;
 
     /**
-     * @var integer The current state of the controller (one of the
-     *              self::STATE_* constants). Represents the progress of the
-     *              handshake.
+     * @var integer The current state of the controller; one of the self::STATE_*
+     *              constants. Represents the progress of the handshake.
      */
     private $state;
 

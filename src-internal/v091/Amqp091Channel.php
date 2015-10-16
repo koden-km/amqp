@@ -80,10 +80,9 @@ final class Amqp091Channel implements Channel
      * @see Channel::exchange() to declare a new exchange.
      * @see Channel::amqExchange() to use one of the "amq.<type>" exchanges, which are the pre-declared exchanges for each of the exchange types.
      *
-     * Via promise:
-     * @return Exchange            The exchange.
-     * @throws ConnectionException if not connected to the AMQP server.
-     * @throws LogicException      if the channel has been closed.
+     * @return Exchange            [via promise] The exchange.
+     * @throws ConnectionException [via promise] If not connected to the AMQP server.
+     * @throws LogicException      [via promise] If the channel has been closed.
      */
     public function directExchange()
     {
@@ -100,10 +99,9 @@ final class Amqp091Channel implements Channel
      *
      * @param ExchangeType $type The exchange type.
      *
-     * Via promise:
-     * @return Exchange            The exchange.
-     * @throws ConnectionException if not connected to the AMQP server.
-     * @throws LogicException      if the channel has been closed.
+     * @return Exchange            [via promise] The exchange.
+     * @throws ConnectionException [via promise] If not connected to the AMQP server.
+     * @throws LogicException      [via promise] If the channel has been closed.
      */
     public function amqExchange(ExchangeType $type)
     {
@@ -120,12 +118,11 @@ final class Amqp091Channel implements Channel
      * @param QueueOptions|null $options Options that affect the behaviour of the queue, or null to use the defaults.
      * @param DeclareMode|null  $mode    The declare mode, ACTIVE (create the queue, the default) or PASSIVE (check if the queue exists).
      *
-     * Via promise:
-     * @return Queue                   The queue.
-     * @throws DeclareException        if the queue could not be declared because it already exists with different options.
-     * @throws ResourceLockedException if the queue already exists, but another connection has exclusive access.
-     * @throws ConnectionException     if not connected to the AMQP server.
-     * @throws LogicException          if the channel has been closed.
+     * @return Queue                   [via promise] The queue.
+     * @throws DeclareException        [via promise] If the queue could not be declared because it already exists with different options.
+     * @throws ResourceLockedException [via promise] If the queue already exists, but another connection has exclusive access.
+     * @throws ConnectionException     [via promise] If not connected to the AMQP server.
+     * @throws LogicException          [via promise] If the channel has been closed.
      */
     public function queue(
         $name = '',
@@ -142,10 +139,9 @@ final class Amqp091Channel implements Channel
      * @param integer|null $size  The maximum total size of un-acknowledged messages to accept, in bytes, or null to use the server default.
      * @param QosScope     $scope The scope at which the change is applied.
      *
-     * Via promise:
-     * @return null                on success.
-     * @throws ConnectionException if not connected to the AMQP server.
-     * @throws LogicException      if the channel has been closed.
+     * @return null                [via promise] On success.
+     * @throws ConnectionException [via promise] If not connected to the AMQP server.
+     * @throws LogicException      [via promise] If the channel has been closed.
      *
      * Please note that RabbitMQ does not currently (as of v3.5.5) support
      * prefetch-size limits.
@@ -157,9 +153,6 @@ final class Amqp091Channel implements Channel
 
     /**
      * Close the channel.
-     *
-     * Via promise:
-     * @return null on success.
      */
     public function close()
     {

@@ -14,7 +14,8 @@ final class GeneratedFrameParser implements FrameParser
 {
     public function __construct()
     {
-        $this->littleEndian = pack('S', 1) === pack('v', 1); // S = machine order unsigned short, v = little-endian order
+        // S = machine order unsigned short, v = little-endian order
+        $this->littleEndian = pack('S', 1) === pack('v', 1);
         $this->requiredBytes = self::MINIMUM_FRAME_SIZE;
         $this->buffer = '';
     }
@@ -22,8 +23,9 @@ final class GeneratedFrameParser implements FrameParser
     /**
      * Retrieve the next frame from the internal buffer.
      *
-     * @return mixed<Frame>      The parsed frame, or null if there is not enough data to produce a frame.
-     * @throws ProtocolException if the buffer is malformed.
+     * @return mixed<Frame>      A sequence of frames produced from the buffer.
+     * @throws ProtocolException if the incoming data does not conform to the
+     *                           AMQP specification.
      */
     public function feed($buffer)
     {
@@ -153,6 +155,10 @@ final class GeneratedFrameParser implements FrameParser
     /**
      * Parse an AMQP "field table" from the head of the buffer.
      *
+     * @todo Split table/field parsing into separate class so different
+     *       implementations may be used for different servers.
+     * @link https://github.com/recoilphp/amqp/issues/7
+     *
      * @return array
      */
     private function parseFieldTable()
@@ -172,6 +178,10 @@ final class GeneratedFrameParser implements FrameParser
      * Parse an AMQP field-table value.
      *
      * @link https://www.rabbitmq.com/amqp-0-9-1-errata.html
+     *
+     * @todo Split table/field parsing into separate class so different
+     *       implementations may be used for different servers.
+     * @link https://github.com/recoilphp/amqp/issues/7
      *
      * @return mixed
      */
@@ -369,7 +379,8 @@ final class GeneratedFrameParser implements FrameParser
     /**
      * Parse a 64-bit unsigned integer from the head of the buffer.
      *
-     * @return integer|string A string is returned when the value is is outside the range of PHP's signed integer type.
+     * @return integer|string A string is returned when the value is is outside
+     *                        the range of PHP's signed integer type.
      */
     private function parseUnsignedInt64()
     {

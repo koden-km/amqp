@@ -60,11 +60,10 @@ interface Queue
      * @param string               $tag      A unique identifier for the consumer, or an empty string use a random, unique tag.
      * @param Channel|null         $channel  The channel to use, or null to use an automatically managed channel.
      *
-     * Via promise:
-     * @return Consumer
-     * @throws ResourceLockedException   if another connection has an exclusive consumer.
-     * @throws ResourceNotFoundException if the queue does not exist on the server.
-     * @throws ConnectionException       if not connected to the AMQP server.
+     * @return Consumer                  [via promise] The created consumer, can be used to cancel consumation.
+     * @throws ResourceLockedException   [via promise] If another connection has an exclusive consumer.
+     * @throws ResourceNotFoundException [via promise] If the queue does not exist on the server.
+     * @throws ConnectionException       [via promise] If not connected to the AMQP server.
      */
     public function consume(
         callable $callback,
@@ -76,9 +75,8 @@ interface Queue
     /**
      * Delete this queue.
      *
-     * Via promise:
-     * @return null                on success.
-     * @throws ConnectionException if not connected to the AMQP server.
+     * @return null                [via promise] On success.
+     * @throws ConnectionException [via promise] If not connected to the AMQP server.
      */
     public function delete();
 
@@ -88,10 +86,9 @@ interface Queue
      * @param Exchange $source     The exchange to bind to.
      * @param string   $routingKey The routing key for DIRECT and TOPIC exchanges, or empty string for FANOUT and HEADERS exchanges.
      *
-     * Via promise:
-     * @return null                     on success.
-     * @throws ConnectionException      if not connected to the AMQP server.
-     * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
+     * @return null                     [via promise] On success.
+     * @throws ConnectionException      [via promise] If not connected to the AMQP server.
+     * @throws InvalidArgumentException [via promise] If a routing key is required but not provided, and vice-versa.
      */
     public function bind(Exchange $source, $routingKey = '');
 
@@ -101,10 +98,9 @@ interface Queue
      * @param Exchange $source     The exchange to unbind from.
      * @param string   $routingKey The routing key for DIRECT and TOPIC exchanges, or empty string for FANOUT and HEADERS exchanges.
      *
-     * Via promise:
-     * @return null                     on success.
-     * @throws ConnectionException      if not connected to the AMQP server.
-     * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
+     * @return null                     [via promise] On success.
+     * @throws ConnectionException      [via promise] If not connected to the AMQP server.
+     * @throws InvalidArgumentException [via promise] If a routing key is required but not provided, and vice-versa.
      */
     public function unbind(Exchange $source, $routingKey = '');
 }

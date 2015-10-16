@@ -21,7 +21,8 @@ final class HandshakeResult
     public $maximumFrameSize;
 
     /**
-     * @var integer|null The heartbeat interval (in seconds), or null if the heartbeat is disabled.
+     * @var integer|null The heartbeat interval (in seconds), or null if the
+     *                   heartbeat is disabled.
      */
     public $heartbeatInterval;
 }

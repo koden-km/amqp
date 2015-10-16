@@ -12,8 +12,9 @@ interface FrameParser
     /**
      * Retrieve the next frame from the internal buffer.
      *
-     * @return mixed<Frame>      The parsed frame, or null if there is not enough data to produce a frame.
-     * @throws ProtocolException if the buffer is malformed.
+     * @return mixed<Frame>      A sequence of frames produced from the buffer.
+     * @throws ProtocolException if the incoming data does not conform to the
+     *                           AMQP specification.
      */
     public function feed($buffer);
 }

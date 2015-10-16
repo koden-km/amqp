@@ -33,9 +33,8 @@ final class Amqp091Connector implements Connector
      *
      * @param ConnectionOptions $options The options used when establishing the connection.
      *
-     * Via promise:
-     * @return Connection          The AMQP connection.
-     * @throws ConnectionException if the connection could not be established.
+     * @return Connection          [via promise] The AMQP connection.
+     * @throws ConnectionException [via promise] If the connection could not be established.
      */
     public function connect(ConnectionOptions $options)
     {

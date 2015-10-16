@@ -11,19 +11,20 @@ use React\EventLoop\Timer\TimerInterface;
 use React\Promise\Deferred;
 use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\Exception\ConnectionException;
-use Recoil\Amqp\Exception\ProtocolException;
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 /**
- * A transport controller that manages a transport which has already completed
- * a successful AMQP handshake.
+ * A transport controller that manages a transport which has already completed a
+ * successful AMQP handshake.
  */
 final class ConnectionController implements TransportController, ServerApi
 {
     /**
-     * @param LoopInterface     $loop            The event loop used for the heartbeat timer.
-     * @param ConnectionOptions $options         The options used when establishing the connection.
+     * @param LoopInterface     $loop            The event loop used for the heartbeat
+     *                                           timer.
+     * @param ConnectionOptions $options         The options used when establishing
+     *                                           the connection.
      * @param HandshakeResult   $handshakeResult The result of the AMQP handshake.
      */
     public function __construct(
@@ -44,10 +45,11 @@ final class ConnectionController implements TransportController, ServerApi
      *
      * @param Transport $transport The transport to manage.
      *
-     * Via promise:
-     * @return ServerApi
-     * @throws ConnnectionException If the handshake failed for any reason.
-     * @throws ProtocolException    If the AMQP protocol was violated by the server.
+     * @return mixed          [via promise] If the controller's work is completed
+     *                        successfully (implementation defined).
+     * @throws Exception      [via promise] If the controller encounters an error
+     *                        (implementation defined).
+     * @throws LogicException If the controller has been started previously.
      */
     public function start(Transport $transport)
     {
@@ -85,12 +87,22 @@ final class ConnectionController implements TransportController, ServerApi
     /**
      * Wait for the next frame of a given type.
      *
+     * This method is generally used to wait for a response from the server after
+     * sending a "synchronous" method frame (i.e, one with a matching "OK" frame).
+     *
+     * The "waiter" is pushed on to a channel/frame-type specific queue. When a
+     * matching frame is received the first waiter is popped from the queue and
+     * resolved using the frame as the value. If the queue is empty, any "listeners"
+     * registered for the same channel/frame-type are notified of the frame.
+     *
+     * @see ServerApi::listen() To register a listener that is notified of every
+     *                          received frame of a given type.
+     *
      * @param string  $type    The type of frame (the PHP class name).
      * @param integer $channel The channel on which to wait, or null for any channel.
      *
-     * Via promise:
-     * @return IncomingFrame When the next matching frame is received.
-     * @throws Exception     If the transport or channel is closed.
+     * @return IncomingFrame [via promise] When the next matching frame is received.
+     * @throws Exception     [via promise] If the transport or channel is closed.
      */
     public function wait($type, $channel = 0)
     {
@@ -127,15 +139,26 @@ final class ConnectionController implements TransportController, ServerApi
     }
 
     /**
-     * Receive notification when a frame of a given type is received.
+     * Receive notification when frames of a given type are received.
+     *
+     * This method is generally used to receive asynchronous/push style
+     * notifications from the server.
+     *
+     * The "listener" is added to channel/frame-type specific pool. When a matching
+     * frame is received that is not dispatched to one of the registered "waiters",
+     * each listener is notified using the frame as the value.
+     *
+     * @see ServerApi::wait() To register a one-time "waiter" that intercepts
+     *                        an incoming frame before it is dispathed to the "listeners".
      *
      * @param string  $type    The type of frame (the PHP class name).
      * @param integer $channel The channel on which to wait, or null for any channel.
      *
-     * Via promise:
-     * @return null If the transport or channel is closed cleanly.
-     * @notify IncomingFrame For each matching frame that is received, unless it was matched to a previous call to wait().
-     * @throws Exception If the transport or channel is closed unexpectedly.
+     * @notify IncomingFrame For each matching frame that is received, unless it
+     *                       was matched a "waiter" registered via wait().
+     *
+     * @return null      [via promise] If the transport or channel is closed cleanly.
+     * @throws Exception [via promise] If the transport or channel is closed unexpectedly.
      */
     public function listen($type, $channel = 0)
     {
@@ -160,7 +183,8 @@ final class ConnectionController implements TransportController, ServerApi
      *
      * @param IncomingFrame $frame The received frame.
      *
-     * @throws Exception The implementation may throw any exception, which closes the transport.
+     * @throws Exception The implementation may throw any exception, which closes
+     *                   the transport.
      */
     public function onFrame(IncomingFrame $frame)
     {
@@ -310,8 +334,8 @@ final class ConnectionController implements TransportController, ServerApi
     private $handshakeResult;
 
     /**
-     * @var integer The current state of the controller (one of the
-     *              self::STATE_* constants).
+     * @var integer The current state of the controller; one of the self::STATE_*
+     *              constants.
      */
     private $state;
 
@@ -344,8 +368,8 @@ final class ConnectionController implements TransportController, ServerApi
     private $heartbeatsSinceLastSend;
 
     /**
-     * @var integer The number of heartbeat ticks that have occurred without
-     *              data was last received from the server.
+     * @var integer The number of heartbeat ticks that have occurred since data
+     *              was last received from the server.
      */
     private $heartbeatsSinceLastReceive;
 }

@@ -3,7 +3,6 @@
 namespace Recoil\Amqp\v091\Transport;
 
 use Exception;
-use React\Promise\PromiseInterface;
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
 
 /**
@@ -16,7 +15,11 @@ interface TransportController
      *
      * @param Transport $transport The transport to manage.
      *
-     * @return PromiseInterface There is no restriction placed on how a controller resolves, rejects or notifies the promise.
+     * @return mixed          [via promise] If the controller's work is completed
+     *                        successfully (implementation defined).
+     * @throws Exception      [via promise] If the controller encounters an error
+     *                        (implementation defined).
+     * @throws LogicException If the controller has been started previously.
      */
     public function start(Transport $transport);
 
@@ -25,7 +28,8 @@ interface TransportController
      *
      * @param IncomingFrame $frame The received frame.
      *
-     * @throws Exception The implementation may throw any exception, which closes the transport.
+     * @throws Exception The implementation may throw any exception, which closes
+     *                   the transport.
      */
     public function onFrame(IncomingFrame $frame);
 

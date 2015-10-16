@@ -40,9 +40,8 @@ interface Consumer
     /**
      * Stop consuming messages.
      *
-     * Via promise:
-     * @return null                on success.
-     * @throws ConnectionException if not connected to the AMQP server.
+     * @return null                [via promise] On success.
+     * @throws ConnectionException [via promise] If not connected to the AMQP server.
      */
     public function cancel();
 }

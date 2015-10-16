@@ -19,7 +19,7 @@ use RuntimeException;
 final class Amqp091Connection implements Connection
 {
     /**
-     * @param Transport $transport           The transport used to communicate with the server.
+     * @param ServerApi $serverApi           The transport used to communicate with the server.
      * @param integer   $maximumChannelCount The maximum number of channels, as negotiated during the AMQP handshake.
      */
     public function __construct(ServerApi $serverApi)
@@ -33,9 +33,8 @@ final class Amqp091Connection implements Connection
     /**
      * Create a new AMQP channel.
      *
-     * Via promise:
-     * @return Channel             The newly created channel.
-     * @throws ConnectionException if not connected to the AMQP server.
+     * @return Channel             [via promise] The newly created channel.
+     * @throws ConnectionException [via promise] If not connected to the AMQP server.
      */
     public function channel()
     {
