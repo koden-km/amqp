@@ -29,6 +29,22 @@ class ConnectionExceptionTest extends PHPUnit_Framework_TestCase
         $this->commonAssertions($exception);
     }
 
+    public function testHandshakeFailed()
+    {
+        $exception = ConnectionException::handshakeFailed(
+            $this->options,
+            '<description>',
+            $this->previous
+        );
+
+        $this->commonAssertions($exception);
+
+        $this->assertSame(
+            'Unable to complete handshake on AMQP server [localhost:5672], <description>.',
+            $exception->getMessage()
+        );
+    }
+
     public function testAuthenticationFailed()
     {
         $exception = ConnectionException::authenticationFailed(

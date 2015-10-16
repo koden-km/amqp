@@ -21,8 +21,8 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 final class ConnectionController implements TransportController, ServerApi
 {
     /**
-     * @param LoopInterface     $loop            The event loop used for the heartbeat
-     *                                           timer.
+     * @param LoopInterface     $loop            The event loop used for the
+     *                                           heartbeat timer.
      * @param ConnectionOptions $options         The options used when establishing
      *                                           the connection.
      * @param HandshakeResult   $handshakeResult The result of the AMQP handshake.

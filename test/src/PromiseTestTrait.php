@@ -65,4 +65,28 @@ trait PromiseTestTrait
 
         throw new RuntimeException('Promise was not rejected.');
     }
+
+    /**
+     * Ensure that the given promiser has not been settled.
+     *
+     * @param PromiseInterface $proiser
+     *
+     */
+    public function assertNotSettled(PromiseInterface $promise)
+    {
+        $result = null;
+
+        $promise->then(
+            function () use (&$result) {
+                $result = 'resolved';
+            },
+            function () use (&$result) {
+                $result = 'rejected';
+            }
+        );
+
+        if ($result) {
+            throw new RuntimeException('Promise was unexpectedly ' . $result . '.');
+        }
+    }
 }

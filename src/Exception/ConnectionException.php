@@ -62,6 +62,32 @@ final class ConnectionException extends RuntimeException implements RecoilAmqpEx
     }
 
     /**
+     * Create an exception that indicates a the AMQP handshake failed.
+     *
+     * @param ConnectionOptions $options     The options used when establishing the connection.
+     * @param string            $description A description of the problem.
+     * @param Exception|null    $previous    The exception that caused this exception, if any.
+     *
+     * @return ConnectionException
+     */
+    public static function handshakeFailed(
+        ConnectionOptions $options,
+        $description,
+        Exception $previous = null
+    ) {
+        return new self(
+            $options,
+            sprintf(
+                'Unable to complete handshake on AMQP server [%s:%d], %s.',
+                $options->host(),
+                $options->port(),
+                rtrim($description, '.')
+            ),
+            $previous
+        );
+    }
+
+    /**
      * Create an exception that indicates that the credentials specified in the
      * connection options do not grant access to the requested AMQP virtual host.
      *

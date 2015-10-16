@@ -4,6 +4,7 @@ namespace Recoil\Amqp\v091\Transport;
 
 use Exception;
 use function React\Promise\reject;
+use LogicException;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use Recoil\Amqp\ConnectionOptions;
@@ -17,7 +18,6 @@ use Recoil\Amqp\v091\Protocol\Connection\ConnectionStartOkFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionTuneFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionTuneOkFrame;
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use RuntimeException;
 
 /**
  * A transport controller that completes the AMQP handshake.
@@ -70,10 +70,10 @@ final class HandshakeController implements TransportController
             [$this, 'onCancel']
         );
 
+        $this->state = self::STATE_WAIT_START;
+
         $this->transport = $transport;
         $this->transport->resume($this);
-
-        $this->state = self::STATE_WAIT_START;
 
         return $this->deferred->promise();
     }
@@ -91,9 +91,10 @@ final class HandshakeController implements TransportController
         if (0 !== $frame->channel) {
             throw ProtocolException::create(
                 sprintf(
-                    'Frame received (%s) on non-zero (%d) channel during AMQP handshake.',
+                    'Frame received (%s) on non-zero (%d) channel during AMQP handshake (state: %d).',
                     get_class($frame),
-                    $frame->channel
+                    $frame->channel,
+                    $this->state
                 )
             );
         } elseif (self::STATE_WAIT_START === $this->state && $frame instanceof ConnectionStartFrame) {
@@ -105,8 +106,9 @@ final class HandshakeController implements TransportController
         } else {
             throw ProtocolException::create(
                 sprintf(
-                    'Unexpected frame (%s) received during AMQP handshake.',
-                    get_class($frame)
+                    'Unexpected frame (%s) received during AMQP handshake (state: %d).',
+                    get_class($frame),
+                    $this->state
                 )
             );
         }
@@ -119,9 +121,7 @@ final class HandshakeController implements TransportController
      */
     public function onTransportClosed(Exception $exception = null)
     {
-        if (self::STATE_DONE === $this->state) {
-            return;
-        } elseif (null === $exception) {
+        if (null === $exception) {
             if (self::STATE_WAIT_TUNE === $this->state) {
                 $exception = ConnectionException::authenticationFailed($this->options);
             } elseif (self::STATE_WAIT_OPEN_OK === $this->state) {
@@ -143,11 +143,9 @@ final class HandshakeController implements TransportController
         $this->done();
         $this->transport->close();
         $this->deferred->reject(
-            ConnectionException::coultNotConnect(
+            ConnectionException::handshakeFailed(
                 $this->options,
-                new RuntimeException(
-                    'AMQP handshake timed out after ' . $this->options->timeout() . ' seconds.'
-                )
+                'the handshake timed out after ' . $this->options->timeout() . ' seconds'
             )
         );
     }
@@ -168,7 +166,7 @@ final class HandshakeController implements TransportController
         if (!preg_match('/\bAMQPLAIN\b/', $frame->mechanisms)) {
             throw ConnectionException::handshakeFailed(
                 $this->options,
-                'The AMQP server does not support the AMQPLAIN authentication mechanism.'
+                'the AMQPLAIN authentication mechanism is not supported'
             );
         }
 
@@ -179,6 +177,8 @@ final class HandshakeController implements TransportController
 
         $credentials = "\x05LOGINS"    . pack('N', strlen($user)) . $user
                      . "\x08PASSWORDS" . pack('N', strlen($pass)) . $pass;
+
+        $this->state = self::STATE_WAIT_TUNE;
 
         $this->transport->send(
             ConnectionStartOkFrame::create(
@@ -194,36 +194,33 @@ final class HandshakeController implements TransportController
                 $credentials
             )
         );
-
-        $this->state = self::STATE_WAIT_TUNE;
     }
 
     private function onTuneFrame(ConnectionTuneFrame $frame)
     {
-        if ($frame->channelMax === self::UNLIMITED_CHANNELS) {
-            $this->handshakeResult->maximumChannelCount = self::MAX_CHANNELS;
-        } elseif ($frame->channelMax > self::MAX_CHANNELS) {
-            $this->handshakeResult->maximumChannelCount = self::MAX_CHANNELS;
-        } else {
+        if (
+               $frame->channelMax !== self::UNLIMITED_CHANNELS
+            && $frame->channelMax < $this->handshakeResult->maximumChannelCount
+        ) {
             $this->handshakeResult->maximumChannelCount = $frame->channelMax;
         }
 
-        if ($frame->frameMax === self::UNLIMITED_FRAME_SIZE) {
-            $this->handshakeResult->maximumFrameSize = self::MAX_FRAME_SIZE;
-        } elseif ($frame->frameMax > self::MAX_FRAME_SIZE) {
-            $this->handshakeResult->maximumFrameSize = self::MAX_FRAME_SIZE;
-        } else {
+        if (
+               $frame->frameMax !== self::UNLIMITED_FRAME_SIZE
+            && $frame->frameMax < $this->handshakeResult->maximumFrameSize
+        ) {
             $this->handshakeResult->maximumFrameSize = $frame->frameMax;
         }
 
         // @todo Use heartbeat value from connection options
         // @link https://github.com/recoilphp/amqp/issues/1
-
         if ($frame->heartbeat === self::HEARTBEAT_DISABLED) {
             $this->handshakeResult->heartbeatInterval = null;
         } else {
             $this->handshakeResult->heartbeatInterval = $frame->heartbeat;
         }
+
+        $this->state = self::STATE_WAIT_OPEN_OK;
 
         $this->transport->send(
             ConnectionTuneOkFrame::create(
@@ -240,12 +237,11 @@ final class HandshakeController implements TransportController
                 $this->options->vhost()
             )
         );
-
-        $this->state = self::STATE_WAIT_OPEN_OK;
     }
 
     private function onOpenOkFrame(ConnectionOpenOkFrame $frame)
     {
+        $this->transport->pause();
         $this->done();
         $this->deferred->resolve($this->handshakeResult);
     }
@@ -261,26 +257,10 @@ final class HandshakeController implements TransportController
     }
 
     /**
-     * The maximum number of channels.
-     *
-     * AMQP channel ID is 2 bytes, but zero is reserved for connection-level
-     * communication.
-     */
-    const MAX_CHANNELS = 0xffff - 1;
-
-    /**
-     * The servrer sends channelMax of zero in the tune frame if it does not impose
+     * The server sends channelMax of zero in the tune frame if it does not impose
      * a channel limit.
      */
     const UNLIMITED_CHANNELS = 0;
-
-    /**
-     * The maximum frame size the client supports.
-     *
-     * Note: RabbitMQ's default is 0x20000 (128 KB), our limit is higher to
-     * allow for some server-side configurability.
-     */
-    const MAX_FRAME_SIZE = 0x80000; // 512 KB
 
     /**
      * The server sends frameMax of zero in the tune frame if it does not impose
