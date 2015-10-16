@@ -1,10 +1,8 @@
 <?php
 
-namespace Recoil\Amqp\v091;
+namespace Recoil\Amqp\v091\Protocol;
 
 use Recoil\Amqp\Connection;
-use Recoil\Amqp\v091\Protocol\IncomingFrame;
-use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 /**
  * A connection to an AMQP server.
@@ -88,50 +86,6 @@ final class Debug
         }
 
         echo PHP_EOL;
-    }
-
-    public static function dumpHex($buffer, $width = 32)
-    {
-        if (!self::ENABLED) {
-            throw new LogicException('Debug is not enabled, for performance reasons you should check Debug::ENABLED before calling ' . __METHOD__ . '.');
-        }
-
-        static $from = '';
-        static $to = '';
-        static $pad = '.'; # padding for non-visible characters
-
-        if ($from === '') {
-            for ($i = 0; $i <= 0xff; ++$i) {
-                $from .= chr($i);
-                $to .= ($i >= 0x20 && $i <= 0x7e) ? chr($i) : $pad;
-            }
-        }
-
-        $hex = str_split(
-            bin2hex($buffer),
-            $width * 2
-        );
-
-        $chars = str_split(
-            strtr($buffer, $from, $to),
-            $width
-        );
-
-        $offset = 0;
-        $output = '';
-
-        foreach ($hex as $i => $line) {
-            $output .= sprintf(
-                '%6d : %-' . ($width * 3 - 1) . 's [%s]' . PHP_EOL,
-                $offset,
-                implode(' ', str_split($line, 2)),
-                $chars[$i]
-            );
-
-            $offset += $width;
-        }
-
-        echo $output;
     }
 
     private function __construct()

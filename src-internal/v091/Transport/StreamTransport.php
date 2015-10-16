@@ -4,7 +4,7 @@ namespace Recoil\Amqp\v091\Transport;
 
 use Exception;
 use React\Stream\DuplexStreamInterface;
-use Recoil\Amqp\v091\Debug;
+use Recoil\Amqp\v091\Protocol\Debug;
 use Recoil\Amqp\v091\Protocol\FrameParser;
 use Recoil\Amqp\v091\Protocol\FrameSerializer;
 use Recoil\Amqp\v091\Protocol\GeneratedFrameParser;
