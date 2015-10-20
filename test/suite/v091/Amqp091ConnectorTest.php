@@ -141,10 +141,7 @@ class Amqp091ConnectorTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(
             ConnectionException::couldNotConnect(
                 $this->options,
-                new RuntimeException(
-                    '<message>',
-                    54321
-                )
+                '54321: <message>'
             ),
             $this->assertRejected($promise)
         );
@@ -161,10 +158,7 @@ class Amqp091ConnectorTest extends PHPUnit_Framework_TestCase
         $this->handshakeController->noInteraction();
 
         $this->assertEquals(
-            ConnectionException::couldNotConnect(
-                $this->options,
-                new RuntimeException('Unable to set socket to non-blocking.')
-            ),
+            new RuntimeException('Unable to set socket to non-blocking.'),
             $this->assertRejected($promise)
         );
     }

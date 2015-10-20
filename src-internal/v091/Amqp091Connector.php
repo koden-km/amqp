@@ -128,16 +128,10 @@ final class Amqp091Connector implements Connector
         if (false === $fd) {
             throw ConnectionException::couldNotConnect(
                 $options,
-                new RuntimeException(
-                    $errorMessage,
-                    $errorCode
-                )
+                $errorCode . ': ' . $errorMessage
             );
         } elseif (false === @$iso->stream_set_blocking($fd, false)) {
-            throw ConnectionException::couldNotConnect(
-                $options,
-                new RuntimeException('Unable to set socket to non-blocking.')
-            );
+            throw new RuntimeException('Unable to set socket to non-blocking.');
         }
 
         return $fd;

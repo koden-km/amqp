@@ -18,11 +18,12 @@ class ConnectionExceptionTest extends PHPUnit_Framework_TestCase
     {
         $exception = ConnectionException::couldNotConnect(
             $this->options,
+            '<description>',
             $this->previous
         );
 
         $this->assertSame(
-            'Unable to connect to AMQP server [localhost:5672], check connection options and network connectivity.',
+            'Unable to connect to AMQP server [localhost:5672], check connection options and network connectivity (<description>).',
             $exception->getMessage()
         );
 

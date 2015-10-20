@@ -16,21 +16,24 @@ final class ConnectionException extends RuntimeException implements RecoilAmqpEx
      * Create an exception that indicates a failure to establish a connection to
      * an AMQP server.
      *
-     * @param ConnectionOptions $options  The options used when establishing the connection.
-     * @param Exception|null    $previous The exception that caused this exception, if any.
+     * @param ConnectionOptions $options     The options used when establishing the connection.
+     * @param string            $description A description of the problem.
+     * @param Exception|null    $previous    The exception that caused this exception, if any.
      *
      * @return ConnectionException
      */
     public static function couldNotConnect(
         ConnectionOptions $options,
+        $description,
         Exception $previous = null
     ) {
         return new self(
             $options,
             sprintf(
-                'Unable to connect to AMQP server [%s:%d], check connection options and network connectivity.',
+                'Unable to connect to AMQP server [%s:%d], check connection options and network connectivity (%s).',
                 $options->host(),
-                $options->port()
+                $options->port(),
+                rtrim($description, '.')
             ),
             $previous
         );
