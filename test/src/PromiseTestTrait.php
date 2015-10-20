@@ -67,10 +67,9 @@ trait PromiseTestTrait
     }
 
     /**
-     * Ensure that the given promiser has not been settled.
+     * Ensure that the given promise has not been settled.
      *
-     * @param PromiseInterface $proiser
-     *
+     * @param PromiseInterface $promise
      */
     public function assertNotSettled(PromiseInterface $promise)
     {

@@ -3,7 +3,6 @@
 namespace Recoil\Amqp\v091\Transport;
 
 use Eloquent\Phony\Phpunit\Phony;
-use Exception;
 use LogicException;
 use PHPUnit_Framework_TestCase;
 use React\EventLoop\LoopInterface;
@@ -30,6 +29,32 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         $this->options = ConnectionOptions::create();
         $this->timeout = 3.1415;
         $this->transport = Phony::fullMock(Transport::class);
+        $this->transportBuilder = new MockTransportBuilder($this, $this->transport);
+
+        // Configure the transport to perform a successful handshake by default ...
+        $this->transportBuilder->receiveOnResume(
+            ConnectionStartFrame::create(
+                0,    // channel
+                null, // versionMajor
+                null, // versionMinor
+                null, // serverProperties
+                'PLAIN AMQPLAIN BLAH', // mechanisms
+                null // locales
+            )
+        );
+        $this->transportBuilder->receiveOnSend(
+            ConnectionStartOkFrame::class,
+            ConnectionTuneFrame::create(
+                0,
+                100, // maximumChannelCount
+                200, // maximumFrameSize
+                300  // heartbeatInterval
+            )
+        );
+        $this->transportBuilder->receiveOnSend(
+            ConnectionOpenFrame::class,
+            ConnectionOpenOkFrame::create()
+        );
 
         $this->loop->addTimer->returns($this->timer->mock());
 
@@ -40,91 +65,8 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    /**
-     * Set-up the transport mock to return some canned frames at each step of
-     * the handshake.
-     *
-     * Use null for the default, or the string '<close-transport>' to close the
-     * transport instead of sending a frame.
-     *
-     * @param IncomingFrame|null|string $startFrame  The frame to receive after the protocol header is sent.
-     * @param IncomingFrame|null|string $tuneFrame   The frame to receive after the Start-Ok frame is sent.
-     * @param IncomingFrame|null|string $openOkFrame The frame to receive after the Open frame is sent.
-     */
-    public function setUpTransport(
-        $startFrame = null,
-        $tuneFrame = null,
-        $openOkFrame = null
-    ) {
-        $this->transport->resume->does(
-            function () use ($startFrame) {
-                if ('<close-transport>' === $startFrame) {
-                    $this->subject->onTransportClosed();
-                } else {
-                    try {
-                        $this->subject->onFrame(
-                            $startFrame ?: ConnectionStartFrame::create(
-                                0,    // channel
-                                null, // versionMajor
-                                null, // versionMinor
-                                null, // serverProperties
-                                'PLAIN AMQPLAIN BLAH', // mechanisms
-                                null // locales
-                            )
-                        );
-                    } catch (Exception $e) {
-                        $this->subject->onTransportClosed($e);
-                    }
-                }
-            }
-        );
-
-        $this->transport->send->with(
-            $this->isInstanceOf(ConnectionStartOkFrame::class)
-        )->does(
-            function () use ($tuneFrame) {
-                if ('<close-transport>' === $tuneFrame) {
-                    $this->subject->onTransportClosed();
-                } else {
-                    try {
-                        $this->subject->onFrame(
-                            $tuneFrame ?: ConnectionTuneFrame::create(
-                                0,   // channel
-                                100, // channel max
-                                200, // frame size max
-                                300  // heartbeat interval
-                            )
-                        );
-                    } catch (Exception $e) {
-                        $this->subject->onTransportClosed($e);
-                    }
-                }
-            }
-        );
-
-        $this->transport->send->with(
-            $this->isInstanceOf(ConnectionOpenFrame::class)
-        )->does(
-            function () use ($openOkFrame) {
-                if ('<close-transport>' === $openOkFrame) {
-                    $this->subject->onTransportClosed();
-                } else {
-                    try {
-                        $this->subject->onFrame(
-                            $openOkFrame ?: ConnectionOpenOkFrame::create()
-                        );
-                    } catch (Exception $e) {
-                        $this->subject->onTransportClosed($e);
-                    }
-                }
-            }
-        );
-    }
-
-    public function testStart()
+    public function testHandshake()
     {
-        $this->setUpTransport();
-
         $promise = $this->subject->start($this->transport->mock());
 
         Phony::inOrder(
@@ -176,10 +118,8 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testStartWhenAlreadyStarted()
+    public function testHandshakeCanNotBeStartedTwice()
     {
-        $this->setUpTransport();
-
         $this->subject->start($this->transport->mock());
 
         $this->setExpectedException(
@@ -192,8 +132,8 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
 
     public function testHandshakeWithUnlimitedChannels()
     {
-        $this->setUpTransport(
-            null,
+        $this->transportBuilder->receiveOnSend(
+            ConnectionStartOkFrame::class,
             ConnectionTuneFrame::create(
                 0,   // channel
                 0,   // channel max (unlimited)
@@ -216,8 +156,8 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
 
     public function testHandshakeWithChannelsGreaterThanMax()
     {
-        $this->setUpTransport(
-            null,
+        $this->transportBuilder->receiveOnSend(
+            ConnectionStartOkFrame::class,
             ConnectionTuneFrame::create(
                 0,   // channel
                 HandshakeResult::MAX_CHANNELS + 1,
@@ -240,8 +180,8 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
 
     public function testHandshakeWithUnlimitedFrameSize()
     {
-        $this->setUpTransport(
-            null,
+        $this->transportBuilder->receiveOnSend(
+            ConnectionStartOkFrame::class,
             ConnectionTuneFrame::create(
                 0,   // channel
                 100, // channel max
@@ -264,8 +204,8 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
 
     public function testHandshakeWithFrameSizeGreaterThanMax()
     {
-        $this->setUpTransport(
-            null,
+        $this->transportBuilder->receiveOnSend(
+            ConnectionStartOkFrame::class,
             ConnectionTuneFrame::create(
                 0,   // channel
                 100, // channel max
@@ -286,36 +226,10 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testHandshakeWithNoAmqPlainSupport()
-    {
-        $this->setUpTransport(
-            ConnectionStartFrame::create(
-                0,    // channel
-                null, // versionMajor
-                null, // versionMinor
-                null, // serverProperties
-                'NOTAMQPLAIN', // mechanisms
-                null // locales
-            )
-        );
-
-        $promise = $this->subject->start($this->transport->mock());
-
-        $this->timer->cancel->called();
-
-        $this->assertEquals(
-            ConnectionException::handshakeFailed(
-                $this->options,
-                'the AMQPLAIN authentication mechanism is not supported'
-            ),
-            $this->assertRejected($promise)
-        );
-    }
-
     public function testHandshakeWithDisabledHeartbeat()
     {
-        $this->setUpTransport(
-            null,
+        $this->transportBuilder->receiveOnSend(
+            ConnectionStartOkFrame::class,
             ConnectionTuneFrame::create(
                 0,   // channel
                 100, // channel max
@@ -343,11 +257,9 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         $this->markTestIncomplete();
     }
 
-    public function testHandshakeWithImmediatelyClosedTransport()
+    public function testTimerIsCancelledUponFailure()
     {
-        $this->setUpTransport(
-            '<close-transport>'
-        );
+        $this->transportBuilder->closeOnResume();
 
         $promise = $this->subject->start($this->transport->mock());
 
@@ -361,124 +273,132 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testHandshakeWithAuthenticationFailure()
+    public function testServerWithNoAmqPlainSupport()
     {
-        $this->setUpTransport(
-            null,
-            '<close-transport>'
+        $this->transportBuilder->receiveOnResume(
+            ConnectionStartFrame::create(
+                0,    // channel
+                null, // versionMajor
+                null, // versionMinor
+                null, // serverProperties
+                'NOTAMQPLAIN', // mechanisms
+                null // locales
+            )
         );
 
-        $promise = $this->subject->start($this->transport->mock());
+        $this->assertEquals(
+            ConnectionException::handshakeFailed(
+                $this->options,
+                'the AMQPLAIN authentication mechanism is not supported'
+            ),
+            $this->assertRejected(
+                $this->subject->start($this->transport->mock())
+            )
+        );
+    }
 
-        $this->timer->cancel->called();
+    public function testAuthenticationFailure()
+    {
+        $this->transportBuilder->closeOnSend(
+            ConnectionStartOkFrame::class
+        );
 
         $this->assertEquals(
             ConnectionException::authenticationFailed(
                 $this->options
             ),
-            $this->assertRejected($promise)
+            $this->assertRejected(
+                $this->subject->start($this->transport->mock())
+            )
         );
     }
 
-    public function testHandshakeWithAuthorizationFailure()
+    public function testAuthorizationFailure()
     {
-        $this->setUpTransport(
-            null,
-            null,
-            '<close-transport>'
+        $this->transportBuilder->closeOnSend(
+            ConnectionOpenFrame::class
         );
-
-        $promise = $this->subject->start($this->transport->mock());
-
-        $this->timer->cancel->called();
 
         $this->assertEquals(
             ConnectionException::authorizationFailed(
                 $this->options
             ),
-            $this->assertRejected($promise)
-        );
-    }
-
-    public function testOnFrameWithNonZeroChannel()
-    {
-        $this->setExpectedException(
-            ProtocolException::class,
-            'The AMQP server has sent invalid data: Frame received (' . ConnectionStartFrame::class . ') on non-zero (123) channel during AMQP handshake (state: 0).'
-        );
-
-        $this->subject->onFrame(
-            ConnectionStartFrame::create(
-                123 // channel
+            $this->assertRejected(
+                $this->subject->start($this->transport->mock())
             )
         );
     }
 
-    public function testOnFrameWithUnexpectedFrameWaitStart()
+    public function testFrameWithNonZeroChannel()
     {
-        $this->setUpTransport(
-            HeartbeatFrame::create() // heartbeats are unexpected at this point
+        $this->transportBuilder->receiveOnResume(
+            ConnectionStartFrame::create(123)
         );
 
-        $promise = $this->subject->start($this->transport->mock());
+        $this->assertEquals(
+            ProtocolException::create(
+                'Frame received (' . ConnectionStartFrame::class . ') on non-zero (123) channel during AMQP handshake (state: 1).'
+            ),
+            $this->assertRejected(
+                $this->subject->start($this->transport->mock())
+            )
+        );
+    }
+
+    public function testUnexpectedFrameInWaitStartState()
+    {
+        $this->transportBuilder->receiveOnResume(
+            HeartbeatFrame::create() // heartbeats always unexpected DURING handshake
+        );
 
         $this->assertEquals(
             ProtocolException::create(
                 'Unexpected frame (' . HeartbeatFrame::class . ') received during AMQP handshake (state: 1).'
             ),
-            $this->assertRejected($promise)
+            $this->assertRejected(
+                $this->subject->start($this->transport->mock())
+            )
         );
     }
 
     public function testOnFrameWithUnexpectedFrameWaitTune()
     {
-        $this->setUpTransport(
-            null,
-            HeartbeatFrame::create() // heartbeats are unexpected at this point
+        $this->transportBuilder->receiveOnSend(
+            ConnectionStartOkFrame::class,
+            HeartbeatFrame::create() // heartbeats always unexpected DURING handshake
         );
-
-        $promise = $this->subject->start($this->transport->mock());
 
         $this->assertEquals(
             ProtocolException::create(
                 'Unexpected frame (' . HeartbeatFrame::class . ') received during AMQP handshake (state: 2).'
             ),
-            $this->assertRejected($promise)
+            $this->assertRejected(
+                $this->subject->start($this->transport->mock())
+            )
         );
     }
 
     public function testOnFrameWithUnexpectedFrameWaitOpenOk()
     {
-        $this->setUpTransport(
-            null,
-            null,
-            HeartbeatFrame::create() // heartbeats are unexpected at this point
+        $this->transportBuilder->receiveOnSend(
+            ConnectionOpenFrame::class,
+            HeartbeatFrame::create() // heartbeats always unexpected DURING handshake
         );
-
-        $promise = $this->subject->start($this->transport->mock());
 
         $this->assertEquals(
             ProtocolException::create(
                 'Unexpected frame (' . HeartbeatFrame::class . ') received during AMQP handshake (state: 3).'
             ),
-            $this->assertRejected($promise)
+            $this->assertRejected(
+                $this->subject->start($this->transport->mock())
+            )
         );
     }
 
-    public function testOnCancel()
+    public function testTimeout()
     {
-        $promise = $this->subject->start($this->transport->mock());
+        $this->transportBuilder->doNothingOnResume();
 
-        $promise->cancel();
-
-        $this->timer->cancel->called();
-        $this->transport->close->called();
-
-        $this->assertNotSettled($promise);
-    }
-
-    public function testOnTimeout()
-    {
         $promise = $this->subject->start($this->transport->mock());
 
         $this->subject->onTimeout();
@@ -491,6 +411,27 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
             ),
             $this->assertRejected($promise)
         );
+    }
+
+    public function testCancel()
+    {
+        $this->transportBuilder->doNothingOnResume();
+
+        $promise = $this->subject->start($this->transport->mock());
+        $promise->cancel();
+
+        $this->timer->cancel->called();
+        $this->transport->close->called();
+
+        $this->assertNotSettled($promise);
+    }
+
+    public function testCancelDoesNothingIfComplete()
+    {
+        $promise = $this->subject->start($this->transport->mock());
+        $promise->cancel();
+
+        $this->transport->close->never()->called();
     }
 
     use PromiseTestTrait;
