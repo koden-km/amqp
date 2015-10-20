@@ -163,6 +163,17 @@ final class HandshakeController implements TransportController
 
     private function onStartFrame(ConnectionStartFrame $frame)
     {
+        if ($frame->versionMajor !== 0 || $frame->versionMinor !== 9) {
+            throw ConnectionException::handshakeFailed(
+                $this->options,
+                sprintf(
+                    'the server reported an unexpected AMQP version (v%d.%d)',
+                    $frame->versionMajor,
+                    $frame->versionMinor
+                )
+            );
+        }
+
         if (!preg_match('/\bAMQPLAIN\b/', $frame->mechanisms)) {
             throw ConnectionException::handshakeFailed(
                 $this->options,

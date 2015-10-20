@@ -273,6 +273,48 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function testServerWithUnsupportedMajorVersion()
+    {
+        $this->transportBuilder->receiveOnResume(
+            ConnectionStartFrame::create(
+                0, // channel
+                1, // versionMajor (!== 0)
+                0  // versionMinor
+            )
+        );
+
+        $this->assertEquals(
+            ConnectionException::handshakeFailed(
+                $this->options,
+                'the server reported an unexpected AMQP version (v1.0)'
+            ),
+            $this->assertRejected(
+                $this->subject->start($this->transport->mock())
+            )
+        );
+    }
+
+    public function testServerWithUnsupportedMinorVersion()
+    {
+        $this->transportBuilder->receiveOnResume(
+            ConnectionStartFrame::create(
+                0, // channel
+                0, // versionMajor
+                1  // versionMinor (!== 9)
+            )
+        );
+
+        $this->assertEquals(
+            ConnectionException::handshakeFailed(
+                $this->options,
+                'the server reported an unexpected AMQP version (v0.1)'
+            ),
+            $this->assertRejected(
+                $this->subject->start($this->transport->mock())
+            )
+        );
+    }
+
     public function testServerWithNoAmqPlainSupport()
     {
         $this->transportBuilder->receiveOnResume(
