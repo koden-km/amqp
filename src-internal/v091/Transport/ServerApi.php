@@ -2,7 +2,7 @@
 
 namespace Recoil\Amqp\v091\Transport;
 
-use Exception;
+use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
@@ -36,8 +36,8 @@ interface ServerApi
      * @param string  $type    The type of frame (the PHP class name).
      * @param integer $channel The channel on which to wait, or null for any channel.
      *
-     * @return IncomingFrame [via promise] When the next matching frame is received.
-     * @throws Exception     [via promise] If the transport or channel is closed.
+     * @return IncomingFrame       [via promise] When the next matching frame is received.
+     * @throws ConnectionException [via promise] If the transport or channel is closed.
      */
     public function wait($type, $channel = 0);
 
@@ -60,8 +60,8 @@ interface ServerApi
      * @notify IncomingFrame For each matching frame that is received, unless it
      *                       was matched a "waiter" registered via wait().
      *
-     * @return null      [via promise] If the transport or channel is closed cleanly.
-     * @throws Exception [via promise] If the transport or channel is closed unexpectedly.
+     * @return null                [via promise] If the transport or channel is closed cleanly.
+     * @throws ConnectionException [via promise] If the transport or channel is closed unexpectedly.
      */
     public function listen($type, $channel = 0);
 
