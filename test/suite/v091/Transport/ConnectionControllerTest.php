@@ -320,6 +320,29 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function testListenIsIgnoredIfThereIsAMatchingWaiter()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $listenerPromise = $this->subject->listen(HeartbeatFrame::class);
+        $this->captureNotifications($listenerPromise);
+
+        $waiterPromise = $this->subject->wait(HeartbeatFrame::class);
+
+        $frame = HeartbeatFrame::create();
+        $this->subject->onFrame($frame);
+
+        $this->assertSame(
+            $frame,
+            $this->assertResolved($waiterPromise)
+        );
+
+        $this->assertSame(
+            [],
+            $this->notifications($listenerPromise)
+        );
+    }
+
     public function testListenPromiseIsResolvedIfTransportClosed()
     {
         $this->markTestIncomplete();
