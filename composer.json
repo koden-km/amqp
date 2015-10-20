@@ -34,7 +34,7 @@
     },
     "require-dev": {
         "eloquent/asplode": "^2",
-        "eloquent/phony": "^0.3",
+        "eloquent/phony": "^0.4",
         "icecave/archer": "~1"
     },
     "autoload": {

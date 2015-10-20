@@ -11,6 +11,7 @@ use React\EventLoop\Timer\TimerInterface;
 use React\Promise\Deferred;
 use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\Exception\ConnectionException;
+use Recoil\Amqp\v091\Protocol\HeartbeatFrame;
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
@@ -38,6 +39,8 @@ final class ConnectionController implements TransportController, ServerApi
         $this->state = self::STATE_STARTABLE;
         $this->waiters = [];
         $this->listeners = [];
+        $this->sendHeartbeatFrame = true;
+        $this->heartbeatsSinceFrameReceived = 0;
     }
 
     /**
@@ -79,7 +82,7 @@ final class ConnectionController implements TransportController, ServerApi
      */
     public function send(OutgoingFrame $frame)
     {
-        $this->heartbeatsSinceLastSend = 0;
+        $this->sendHeartbeatFrame = false;
 
         $this->transport->send($frame);
     }
@@ -113,23 +116,15 @@ final class ConnectionController implements TransportController, ServerApi
         $deferred = null;
         $deferred = new Deferred(
             function () use (&$deferred, $channel, $type) {
-                $index = array_search(
-                    $deferred,
+                array_splice(
                     $this->waiters[$channel][$type],
-                    true
-                );
-
-                if (false === $index) {
-                    return;
-                } elseif (0 === $index) {
-                    array_shift($this->waiters[$channel][$type]);
-                } else {
-                    array_splice(
+                    array_search(
+                        $deferred,
                         $this->waiters[$channel][$type],
-                        $index,
-                        1
-                    );
-                }
+                        true
+                    ),
+                    1
+                );
             }
         );
 
@@ -166,10 +161,18 @@ final class ConnectionController implements TransportController, ServerApi
             throw new LogicException('Controller is not open.');
         }
 
-        $index = count($this->waiters[$channel][$type]);
+        $deferred = null;
         $deferred = new Deferred(
-            function () use ($index, $channel, $type) {
-                unset($this->listeners[$channel][$type][$index]);
+            function () use (&$deferred, $channel, $type) {
+                array_splice(
+                    $this->listeners[$channel][$type],
+                    array_search(
+                        $deferred,
+                        $this->listeners[$channel][$type],
+                        true
+                    ),
+                    1
+                );
             }
         );
 
@@ -198,12 +201,15 @@ final class ConnectionController implements TransportController, ServerApi
      */
     public function onFrame(IncomingFrame $frame)
     {
-        $this->heartbeatsSinceLastReceive = 0;
+        $this->heartbeatsSinceFrameReceived = 0;
 
         if (self::STATE_OPEN === $this->state) {
             $type = get_class($frame);
 
-            if (isset($this->waiters[$frame->channel][$type])) {
+            if (
+                isset($this->waiters[$frame->channel][$type])
+                && $this->waiters[$frame->channel][$type]
+            ) {
                 $deferred = array_shift($this->waiters[$frame->channel][$type]);
                 $deferred->resolve($frame);
             } elseif (isset($this->listeners[$frame->channel][$type])) {
@@ -212,16 +218,16 @@ final class ConnectionController implements TransportController, ServerApi
                 }
             }
 
-            // TODO
-            if ($frame instanceof ConnectionCloseFrame) {
-                $this->closedByServer($frame);
-                break;
-            }
+            // // TODO
+            // if ($frame instanceof ConnectionCloseFrame) {
+            //     $this->closedByServer($frame);
+            //     break;
+            // }
         } elseif (self::STATE_CLOSING === $this->state) {
-            // TODO
-            if ($frame instanceof ConnectionCloseOkFrame) {
-                $this->closedByClient($frame);
-            }
+            // // TODO
+            // if ($frame instanceof ConnectionCloseOkFrame) {
+            //     $this->closedByClient($frame);
+            // }
         }
     }
 
@@ -233,7 +239,7 @@ final class ConnectionController implements TransportController, ServerApi
     public function onTransportClosed(Exception $exception = null)
     {
         $this->done();
-        $this->rejectListeners(
+        $this->settle(
             ConnectionException::closedUnexpectedly(
                 $this->options,
                 $exception
@@ -246,16 +252,18 @@ final class ConnectionController implements TransportController, ServerApi
      */
     public function onHeartbeat()
     {
-        if (++$this->heartbeatsSinceLastSend >= 1) {
-            $this->send(HeartbeatFrame::create());
+        if ($this->sendHeartbeatFrame) {
+            $this->transport->send(HeartbeatFrame::create());
+        } else {
+            $this->sendHeartbeatFrame = true;
         }
 
-        if (++$this->heartbeatsSinceLastReceive >= 2) {
+        if (++$this->heartbeatsSinceFrameReceived >= 2) {
             $this->done();
-            $this->rejectListeners(
+            $this->settle(
                 ConnectionException::heartbeatTimedOut(
                     $this->options,
-                    $this->heartbeatTimer->getInterval()
+                    $this->handshakeResult->heartbeatInterval
                 )
             );
 
@@ -278,26 +286,30 @@ final class ConnectionController implements TransportController, ServerApi
      *
      * @param Exception|null $exception The rejection exception, if any.
      */
-    private function finalizeListeners(Exception $exception = null)
+    private function settle(Exception $exception = null)
     {
         $waiters = $this->waiters;
         $this->waiters = [];
 
-        foreach ($waiters as $channel => $deferreds) {
-            foreach ($deferreds as $deferred) {
-                $deferred->reject($exception);
+        foreach ($waiters as $queues) {
+            foreach ($queues as $queue) {
+                foreach ($queue as $deferred) {
+                    $deferred->reject($exception);
+                }
             }
         }
 
         $listeners = $this->listeners;
         $this->listeners = [];
 
-        foreach ($listeners as $channel => $deferreds) {
-            foreach ($deferreds as $deferred) {
-                if ($exception) {
-                    $deferred->reject($exception);
-                } else {
-                    $deferred->resolve();
+        foreach ($listeners as $lists) {
+            foreach ($lists as $list) {
+                foreach ($list as $deferred) {
+                    if ($exception) {
+                        $deferred->reject($exception);
+                    } else {
+                        $deferred->resolve();
+                    }
                 }
             }
         }
@@ -352,12 +364,16 @@ final class ConnectionController implements TransportController, ServerApi
     /**
      * @var array A 2-dimensional array mapping channel/frame type to a queue of
      *            deferreds ($waiters[$channel][$frameType] === [$deferred, ...]).
+     *
+     * @todo Benchmark against using single key composed of $channel and $frameType.
      */
     private $waiters;
 
     /**
      * @var array A 2-dimensional array mapping channel/frame to a sequence of
      *            deferreds ($waiters[$channel][$frameType] === [$deferred, ...]).
+     *
+     * @todo Benchmark against using single key composed of $channel and $frameType.
      */
     private $listeners;
 
@@ -372,14 +388,13 @@ final class ConnectionController implements TransportController, ServerApi
     private $timer;
 
     /**
-     * @var integer The number of heartbeat ticks that have occurred since data
-     *              was last sent to the server.
+     * @var boolean True if a heartbeat frame should be sent on the next heartbeat.
      */
-    private $heartbeatsSinceLastSend;
+    private $sendHeartbeatFrame;
 
     /**
      * @var integer The number of heartbeat ticks that have occurred since data
      *              was last received from the server.
      */
-    private $heartbeatsSinceLastReceive;
+    private $heartbeatsSinceFrameReceived;
 }

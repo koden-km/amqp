@@ -5,6 +5,7 @@ namespace Recoil\Amqp;
 use Exception;
 use React\Promise\PromiseInterface;
 use RuntimeException;
+use SplObjectStorage;
 
 trait PromiseTestTrait
 {
@@ -73,19 +74,48 @@ trait PromiseTestTrait
      */
     public function assertNotSettled(PromiseInterface $promise)
     {
-        $result = null;
-
         $promise->then(
-            function () use (&$result) {
-                $result = 'resolved';
+            function () use (&$settled) {
+                $this->fail('Promise was unexpectedly resolved.');
             },
-            function () use (&$result) {
-                $result = 'rejected';
+            function () use (&$settled) {
+                $this->fail('Promise was unexpectedly rejected.');
             }
         );
 
-        if ($result) {
-            throw new RuntimeException('Promise was unexpectedly ' . $result . '.');
-        }
+        // silence risky test warnings
+        $this->assertTrue(true);
     }
+
+    public function captureNotifications(PromiseInterface $promise)
+    {
+        $promise->progress(
+            function ($value) use ($promise) {
+                if (!$this->notifications) {
+                    $this->notifications = new SplObjectStorage();
+                }
+
+                if ($this->notifications->contains($promise)) {
+                    $values = $this->notifications[$promise];
+                    $values[] = $value;
+                    $this->notifications[$promise] = $values;
+                } else {
+                    $this->notifications->attach($promise, [$value]);
+                }
+            }
+        );
+    }
+
+    public function notifications(PromiseInterface $promise)
+    {
+        if (!$this->notifications) {
+            return [];
+        } elseif (!$this->notifications->contains($promise)) {
+            return [];
+        }
+
+        return $this->notifications[$promise];
+    }
+
+    private $notifications;
 }

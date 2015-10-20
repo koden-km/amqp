@@ -118,18 +118,6 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testHandshakeCanNotBeStartedTwice()
-    {
-        $this->subject->start($this->transport->mock());
-
-        $this->setExpectedException(
-            LogicException::class,
-            'Controller has already been started.'
-        );
-
-        $this->subject->start($this->transport->mock());
-    }
-
     public function testHandshakeWithUnlimitedChannels()
     {
         $this->transportBuilder->receiveOnSend(
@@ -248,6 +236,18 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
                 $this->subject->start($this->transport->mock())
             )
         );
+    }
+
+    public function testCanNotBeStartedTwice()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $this->setExpectedException(
+            LogicException::class,
+            'Controller has already been started.'
+        );
+
+        $this->subject->start($this->transport->mock());
     }
 
     public function testHandshakeWithHeartbeatLessThanSpecifiedInOptions()
