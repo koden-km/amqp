@@ -3,7 +3,6 @@
 namespace Recoil\Amqp\v091\Protocol;
 
 use Recoil\Amqp\Exception\ProtocolException;
-
 /**
  * Produces Frame objects from binary data.
  *
@@ -12,16 +11,20 @@ use Recoil\Amqp\Exception\ProtocolException;
  */
 final class GeneratedFrameParser implements FrameParser
 {
-    public function __construct()
+    /**
+     * @param TableParser The parser used to parse AMQP tables.
+     */
+    public function __construct(TableParser $tableParser)
     {
-        // S = machine order unsigned short, v = little-endian order
-        $this->littleEndian = pack('S', 1) === pack('v', 1);
+        $this->tableParser = $tableParser;
         $this->requiredBytes = self::MINIMUM_FRAME_SIZE;
         $this->buffer = '';
     }
 
     /**
      * Retrieve the next frame from the internal buffer.
+     *
+     * @param string $buffer Binary data to feed to the parser.
      *
      * @return mixed<Frame>      A sequence of frames produced from the buffer.
      * @throws ProtocolException if the incoming data does not conform to the
@@ -124,328 +127,7 @@ final class GeneratedFrameParser implements FrameParser
         }
     }
 
-    /**
-     * Parse an AMQP "short string" from the head of the buffer.
-     *
-     * The maximum length of a short string is 255 bytes.
-     *
-     * @return string The UTF-8 string read from the buffer.
-     */
-    private function parseShortString()
-    {
-        $length = ord($this->buffer);
-
-        try {
-            return substr($this->buffer, 1, $length);
-        } finally {
-            $this->buffer = substr($this->buffer, $length + 1);
-        }
-    }
-
-    /**
-     * Parse an AMQP "long string" from the head of the buffer.
-     *
-     * @return string The UTF-8 string read from the buffer.
-     */
-    private function parseLongString()
-    {
-        return $this->parseByteArray();
-    }
-
-    /**
-     * Parse an AMQP "field table" from the head of the buffer.
-     *
-     * @todo Split table/field parsing into separate class so different
-     *       implementations may be used for different servers.
-     * @link https://github.com/recoilphp/amqp/issues/7
-     *
-     * @return array
-     */
-    private function parseFieldTable()
-    {
-        $length = $this->parseUnsignedInt32();
-        $stopAt = strlen($this->buffer) - $length;
-        $table  = [];
-
-        while (strlen($this->buffer) > $stopAt) {
-            $table[$this->parseShortString()] = $this->parseField();
-        }
-
-        return $table;
-    }
-
-    /**
-     * Parse an AMQP field-table value.
-     *
-     * @link https://www.rabbitmq.com/amqp-0-9-1-errata.html
-     *
-     * @todo Split table/field parsing into separate class so different
-     *       implementations may be used for different servers.
-     * @link https://github.com/recoilphp/amqp/issues/7
-     *
-     * @return mixed
-     */
-    private function parseField()
-    {
-        $type = $this->buffer[0];
-        $this->buffer = substr($this->buffer, 1);
-
-        switch ($type) {
-            // RabbitMQ deviations from spec ...
-            case 's': return $this->parseSignedInt16(); // spec: short-str
-            case 'l': return $this->parseSignedInt64(); // spec: UNSIGNED 64-bit integer
-            case 'x': return $this->parseByteArray();
-
-            // AMQP spec and RabbitMQ match ...
-            case 't': return $this->parseUnsignedInt8() !== 0;
-            case 'b': return $this->parseSignedInt8();
-            case 'I': return $this->parseSignedInt32();
-            case 'f': return $this->parseFloat();
-            case 'd': return $this->parseDouble();
-            case 'D': return $this->parseDecimal();
-            case 'S': return $this->parseLongString();
-            case 'A': return $this->parseArray();
-            case 'T': return $this->parseUnsignedInt64();
-            case 'F': return $this->parseFieldTable();
-            case 'V': return null;
-
-            // Unsupported by RabbitMQ ...
-            case 'B': return $this->parseUnsignedInt8();
-            case 'U': return $this->parseSignedInt16();
-            case 'u': return $this->parseUnsignedInt16();
-            case 'i': return $this->parseUnsignedInt32();
-            case 'L': return $this->parseSignedInt64();
-        }
-
-        throw ProtocolException::create(
-            sprintf(
-                'Field-table value type (0x%02x) is invalid or unrecognised.',
-                ord($type)
-            )
-        );
-    }
-
-    /**
-     * Parse an AMQP field-array value.
-     *
-     * @return array
-     */
-    private function parseArray()
-    {
-        $length = $this->parseUnsignedInt32();
-        $stopAt = strlen($this->buffer) - $length;
-        $array  = [];
-
-        while (strlen($this->buffer) > $stopAt) {
-            $array[] = $this->parseField();
-        }
-
-        return $array;
-    }
-
-    /**
-     * Parse an AMQP byte-array value.
-     *
-     * @return array
-     */
-    private function parseByteArray()
-    {
-        list(, $length) = unpack('N', $this->buffer);
-        try {
-            return substr($this->buffer, 4, $length);
-        } finally {
-            $this->buffer = substr($this->buffer, $length + 4);
-        }
-    }
-
-    /**
-     * Parse a 8-bit signed integer from the head of the buffer.
-     *
-     * @return integer
-     */
-    private function parseSignedInt8()
-    {
-        try {
-            $result = ord($this->buffer);
-
-            if ($result & 0x80) {
-                return $result - 0x100;
-            }
-
-            return $result;
-        } finally {
-            $this->buffer = substr($this->buffer, 1);
-        }
-    }
-
-    /**
-     * Parse a 8-bit unsigned integer from the head of the buffer.
-     *
-     * @return integer
-     */
-    private function parseUnsignedInt8()
-    {
-        try {
-            return ord($this->buffer);
-        } finally {
-            $this->buffer = substr($this->buffer, 1);
-        }
-    }
-
-    /**
-     * Parse a 16-bit signed integer from the head of the buffer.
-     *
-     * @return integer
-     */
-    private function parseSignedInt16()
-    {
-        try {
-            $result = unpack('n', $this->buffer)[1];
-
-            if ($result & 0x8000) {
-                return $result - 0x10000;
-            }
-
-            return $result;
-        } finally {
-            $this->buffer = substr($this->buffer, 2);
-        }
-    }
-
-    /**
-     * Parse a 16-bit unsigned integer from the head of the buffer.
-     *
-     * @return integer
-     */
-    private function parseUnsignedInt16()
-    {
-        try {
-            return unpack('n', $this->buffer)[1];
-        } finally {
-            $this->buffer = substr($this->buffer, 2);
-        }
-    }
-
-    /**
-     * Parse a 32-bit signed integer from the head of the buffer.
-     *
-     * @return integer
-     */
-    private function parseSignedInt32()
-    {
-        try {
-            $result = unpack('N', $this->buffer)[1];
-
-            if ($result & 0x80000000) {
-                return $result - 0x100000000;
-            }
-
-            return $result;
-        } finally {
-            $this->buffer = substr($this->buffer, 4);
-        }
-    }
-
-    /**
-     * Parse a 32-bit unsigned integer from the head of the buffer.
-     *
-     * @return integer
-     */
-    private function parseUnsignedInt32()
-    {
-        try {
-            return unpack('N', $this->buffer)[1];
-        } finally {
-            $this->buffer = substr($this->buffer, 4);
-        }
-    }
-
-    /**
-     * Parse a 64-bit signed integer from the head of the buffer.
-     *
-     * @return integer
-     */
-    private function parseSignedInt64()
-    {
-        try {
-            // 'J' is documented as unsigned, but because PHP only has a signed
-            // type a signed value is returned anyway ...
-            return unpack('J', $this->buffer)[1];
-        } finally {
-            $this->buffer = substr($this->buffer, 8);
-        }
-    }
-
-    /**
-     * Parse a 64-bit unsigned integer from the head of the buffer.
-     *
-     * @return integer|string A string is returned when the value is is outside
-     *                        the range of PHP's signed integer type.
-     */
-    private function parseUnsignedInt64()
-    {
-        try {
-            $result = unpack('J', $this->buffer)[1];
-
-            if ($result < 0) {
-                return sprintf('%u', $result);
-            }
-
-            return $result;
-        } finally {
-            $this->buffer = substr($this->buffer, 8);
-        }
-    }
-
-    /**
-     * Parse an AMQP decimal from the head of the buffer.
-     *
-     * @return float
-     */
-    public function parseDecimal()
-    {
-        $scale = $this->parseUnsignedInt8();
-        $value = $this->parseUnsignedInt32();
-
-        return $value * pow(10, $scale);
-    }
-
-    /**
-     * Parse a float (4-byte) from the head of the buffer.
-     *
-     * @return float
-     */
-    public function parseFloat()
-    {
-        try {
-            if ($this->littleEndian) {
-                return unpack('f', strrev(substr($buffer, 0, 4)));
-            } else {
-                return unpack('f', $this->buffer);
-            }
-        } finally {
-            $this->buffer = substr($this->buffer, 4);
-        }
-    }
-
-    /**
-     * Parse a double (8-byte) from the head of the buffer.
-     *
-     * @return float
-     */
-    public function parseDouble()
-    {
-        try {
-            if ($this->littleEndian) {
-                return unpack('d', strrev(substr($buffer, 0, 8)));
-            } else {
-                return unpack('d', $this->buffer);
-            }
-        } finally {
-            $this->buffer = substr($this->buffer, 8);
-        }
-    }
-
+    use ScalarParserTrait;
     use FrameParserTrait;
 
     // the size of each portion of the header ...
@@ -462,9 +144,9 @@ final class GeneratedFrameParser implements FrameParser
     const MINIMUM_FRAME_SIZE = self::HEADER_SIZE + 1; // end marker is always 1 byte
 
     /**
-     * @var boolean True if the current machine uses little-endian byte-order.
+     * @var TableParser The parser used to parse AMQP tables.
      */
-    private $littleEndian;
+    private $tableParser;
 
     /**
      * @var integer The number of bytes required in the buffer to produce the

@@ -10,6 +10,7 @@ use Recoil\Amqp\v091\Protocol\FrameSerializer;
 use Recoil\Amqp\v091\Protocol\GeneratedFrameParser;
 use Recoil\Amqp\v091\Protocol\GeneratedFrameSerializer;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
+use Recoil\Amqp\v091\Protocol\SigTableParser;
 
 /**
  * Send and receive AMQP frames over a bidirectional stream.
@@ -27,7 +28,7 @@ final class StreamTransport implements Transport
         FrameSerializer $serializer = null
     ) {
         $this->stream = $stream;
-        $this->parser = $parser ?: new GeneratedFrameParser();
+        $this->parser = $parser ?: new GeneratedFrameParser(new SigTableParser());
         $this->serializer = $serializer ?: new GeneratedFrameSerializer();
 
         $this->stream->pause();

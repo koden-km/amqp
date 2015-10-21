@@ -123,7 +123,7 @@ final class FrameParserTraitGenerator implements CodeGenerator
             } elseif ($type === 'longstr') {
                 yield '                $frame->' . $this->toCamelCase($argument->name) . ' = $this->parseLongString();';
             } elseif ($type === 'table') {
-                yield '                $frame->' . $this->toCamelCase($argument->name) . ' = $this->parseFieldTable();';
+                yield '                $frame->' . $this->toCamelCase($argument->name) . ' = $this->tableParser->parse($this->buffer);';
             } else {
                 // @codeCoverageIgnoreStart
                 throw new RuntimeException('Unknown type: ' . $type . '.');
