@@ -185,6 +185,52 @@ trait ScalarParserTrait
     } // @codeCoverageIgnore
 
     /**
+     * Parse a float (4-byte) from the head of the buffer.
+     *
+     * @return float
+     */
+    public function parseFloat()
+    {
+        if (null === self::$littleEndian) {
+            // S = machine order unsigned short, v = little-endian order
+            self::$littleEndian = pack('S', 1) === pack('v', 1);
+        }
+
+        try {
+            if (self::$littleEndian) {
+                return unpack('f', strrev(substr($this->buffer, 0, 4)))[1];
+            } else {
+                return unpack('f', $this->buffer)[1];
+            }
+        } finally {
+            $this->buffer = substr($this->buffer, 4);
+        }
+    } // @codeCoverageIgnore
+
+    /**
+     * Parse a double (8-byte) from the head of the buffer.
+     *
+     * @return float
+     */
+    public function parseDouble()
+    {
+        if (null === self::$littleEndian) {
+            // S = machine order unsigned short, v = little-endian order
+            self::$littleEndian = pack('S', 1) === pack('v', 1);
+        }
+
+        try {
+            if (self::$littleEndian) {
+                return unpack('d', strrev(substr($this->buffer, 0, 8)))[1];
+            } else {
+                return unpack('d', $this->buffer)[1];
+            }
+        } finally {
+            $this->buffer = substr($this->buffer, 8);
+        }
+    } // @codeCoverageIgnore
+
+    /**
      * @var boolean True if the current machine uses little-endian byte-order.
      */
     private static $littleEndian;

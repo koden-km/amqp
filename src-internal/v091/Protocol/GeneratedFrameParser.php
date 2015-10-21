@@ -40,7 +40,7 @@ final class GeneratedFrameParser implements FrameParser
 
             // not enough bytes for a frame ...
             if ($availableBytes < $this->requiredBytes) {
-                return;
+                break;
 
             // we're still looking for the header ...
             } elseif ($this->requiredBytes === self::MINIMUM_FRAME_SIZE) {
@@ -58,7 +58,7 @@ final class GeneratedFrameParser implements FrameParser
                 // taking the payload into account we don't have enough bytes
                 // for the frame ...
                 if ($availableBytes < $this->requiredBytes) {
-                    return;
+                    break;
                 }
             }
 
@@ -95,7 +95,7 @@ final class GeneratedFrameParser implements FrameParser
                         )
                     );
                 }
-                $frame = new HeartbeatFrame();
+                $frame = new HeartbeatFrame(); // call constructor directly (perf)
             } else {
                 throw ProtocolException::create(
                     sprintf(

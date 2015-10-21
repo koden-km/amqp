@@ -29,22 +29,42 @@ class SigTableParserTest extends PHPUnit_Framework_TestCase
             ],
         ];
 
-        yield 'signed octet (b)' => [
+        yield 'signed octet - pos (b)' => [
+            "\x00\x00\x00\x06" . "\x03key" . "b\x7f",
+            ['key' => 127],
+        ];
+
+        yield 'signed octet - neg (b)' => [
             "\x00\x00\x00\x06" . "\x03key" . "b\xfe",
             ['key' => -2],
         ];
 
-        yield 'signed short (s)' => [
+        yield 'signed short - pos (s)' => [
+            "\x00\x00\x00\x07" . "\x03key" . "s\x7f\xff",
+            ['key' => 32767],
+        ];
+
+        yield 'signed short - neg (s)' => [
             "\x00\x00\x00\x07" . "\x03key" . "s\xff\xfe",
             ['key' => -2],
         ];
 
-        yield 'signed long (I)' => [
+        yield 'signed long - pos (I)' => [
+            "\x00\x00\x00\x09" . "\x03key" . "I\x7f\xff\xff\xff",
+            ['key' => 2147483647],
+        ];
+
+        yield 'signed long - neg (I)' => [
             "\x00\x00\x00\x09" . "\x03key" . "I\xff\xff\xff\xfe",
             ['key' => -2],
         ];
 
-        yield 'signed long long (l)' => [
+        yield 'signed long long - pos (l)' => [
+            "\x00\x00\x00\x0d" . "\x03key" . "l\x7f\xff\xff\xff\xff\xff\xff\xff",
+            ['key' => 9223372036854775807],
+        ];
+
+        yield 'signed long long - neg (l)' => [
             "\x00\x00\x00\x0d" . "\x03key" . "l\xff\xff\xff\xff\xff\xff\xff\xfe",
             ['key' => -2],
         ];
@@ -71,7 +91,12 @@ class SigTableParserTest extends PHPUnit_Framework_TestCase
             ['key' => '314'],
         ];
 
-        yield 'decimal - pos - scale larger than string representation (D)' => [
+        yield 'decimal - pos - scale same as string length (D)' => [
+            "\x00\x00\x00\x0a" . "\x03key" . "D\x03\x00\x00\x01\x3a",
+            ['key' => '0.314'],
+        ];
+
+        yield 'decimal - pos - scale larger than string length (D)' => [
             "\x00\x00\x00\x0a" . "\x03key" . "D\x05\x00\x00\x01\x3a",
             ['key' => '0.00314'],
         ];
@@ -86,7 +111,12 @@ class SigTableParserTest extends PHPUnit_Framework_TestCase
             ['key' => '-314'],
         ];
 
-        yield 'decimal - neg - scale larger than string representation (D)' => [
+        yield 'decimal - neg - scale same as string length (D)' => [
+            "\x00\x00\x00\x0a" . "\x03key" . "D\x03\xff\xff\xfe\xc6",
+            ['key' => '-0.314'],
+        ];
+
+        yield 'decimal - neg - scale larger than string length (D)' => [
             "\x00\x00\x00\x0a" . "\x03key" . "D\x05\xff\xff\xfe\xc6",
             ['key' => '-0.00314'],
         ];
