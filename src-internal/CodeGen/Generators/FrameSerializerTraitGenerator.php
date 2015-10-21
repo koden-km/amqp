@@ -107,7 +107,7 @@ final class FrameSerializerTraitGenerator implements CodeGenerator
             yield '            return ' . $methodType . ' . pack("n", $frame->channel) . ' . $this->generateLiteralBuffer($buffer) . ';';
 
             return;
-        }
+        } // @codeCoverageIgnore
 
         $this->bitArgs = [];
         $this->fixedArgs = [];
@@ -138,7 +138,9 @@ final class FrameSerializerTraitGenerator implements CodeGenerator
             } elseif ($type === 'table') {
                 yield '                     . $this->serializeTable($frame->' . $this->toCamelCase($argument->name) . ')';
             } else {
+                // @codeCoverageIgnoreStart
                 throw new RuntimeException('Unknown type: ' . $type . '.');
+                // @codeCoverageIgnoreEnd
             }
         }
 
@@ -191,7 +193,10 @@ final class FrameSerializerTraitGenerator implements CodeGenerator
             $name     = $this->toCamelCase($argument->name);
 
             if ($format === 'C') {
+                // @codeCoverageIgnoreStart
+                throw new LogicException('This code is not currently used, but represents a valid optimisation.');
                 yield '                     . chr($frame->' . $name . ')';
+                // @codeCoverageIgnoreEnd
             } else {
                 yield '                     . pack(' . var_export($format, true) . ', $frame->' . $name . ')';
             }

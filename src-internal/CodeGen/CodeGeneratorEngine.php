@@ -17,6 +17,15 @@ final class CodeGeneratorEngine
         ];
     }
 
+    public static function run()
+    {
+        $engine = new self();
+        $engine->generate(
+            __DIR__ . '/../../res/amqp-rabbitmq-0.9.1.json',
+            __DIR__ . '/../../src-generated'
+        );
+    }
+
     /**
      * Generate code.
      *

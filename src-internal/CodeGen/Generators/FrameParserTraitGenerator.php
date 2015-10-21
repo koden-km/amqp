@@ -91,7 +91,7 @@ final class FrameParserTraitGenerator implements CodeGenerator
             yield '                return new ' . $entityClass . '();';
 
             return;
-        }
+        } // @codeCoverageIgnore
 
         $this->bitArgs = [];
         $this->fixedArgs = [];
@@ -125,7 +125,9 @@ final class FrameParserTraitGenerator implements CodeGenerator
             } elseif ($type === 'table') {
                 yield '                $frame->' . $this->toCamelCase($argument->name) . ' = $this->parseFieldTable();';
             } else {
+                // @codeCoverageIgnoreStart
                 throw new RuntimeException('Unknown type: ' . $type . '.');
+                // @codeCoverageIgnoreEnd
             }
         }
 
@@ -182,7 +184,10 @@ final class FrameParserTraitGenerator implements CodeGenerator
             yield '                // consume "' . $name . '" (' . $type . ')';
 
             if ($format === 'C') {
+                // @codeCoverageIgnoreStart
+                throw new LogicException('This code is not currently used, but represents a valid optimisation.');
                 yield '                $frame->' . $name . ' = ord($this->buffer);';
+                // @codeCoverageIgnoreEnd
             } else {
                 yield '                list(, $frame->' . $name . ') = unpack(' . var_export($format, true) . ', $this->buffer);';
             }

@@ -61,6 +61,10 @@ trait CodeGeneratorHelperTrait
                     return $type;
                 }
             }
+
+            // @codeCoverageIgnoreStart
+            throw new LogicException('Undefined AMQP domain: ' . $argument->domain . '.');
+            // @codeCoverageIgnoreEnd
         }
 
         return $argument->type;
@@ -74,7 +78,9 @@ trait CodeGeneratorHelperTrait
             }
         }
 
+        // @codeCoverageIgnoreStart
         throw new LogicException('Undefined AMQP constant: ' . $name . '.');
+        // @codeCoverageIgnoreEnd
     }
 
     /**
@@ -142,7 +148,9 @@ trait CodeGeneratorHelperTrait
             return $formats[$type];
         }
 
+        // @codeCoverageIgnoreStart
         throw new LogicException('No pack/unpack format for type: ' . $type . '.');
+        // @codeCoverageIgnoreEnd
     }
 
     /**
