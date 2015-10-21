@@ -20,7 +20,7 @@ final class SigTableSerializer implements TableSerializer
     /**
      * Serialize an AMQP table.
      *
-     * @param array The table.
+     * @param array $table The table.
      *
      * @return string                   The binary serialized table.
      * @throws InvalidArgumentException if the table contains unserializable
@@ -32,24 +32,119 @@ final class SigTableSerializer implements TableSerializer
 
         foreach ($table as $key => $value) {
             $buffer .= $this->serializeShortString($key);
-
-            if (is_string($value)) {
-                // if (strlen($value) <= 0xff) {
-                //     $buffer .= 's' . $this->serializeShortString($value);
-                // } else {
-                    $buffer .= 'S' . $this->serializeLongString($value);
-                // }
-            }
-
-            // if (is_bool($value)) {
-            //     $buffer .= 't' . ord($value);
-            // } elseif (is_float($value)) {
-            //     $buffer .= 'd' .
-            // }
-            // } elseif (is_int($value)
+            $buffer .= $this->serializeField($value);
         }
 
-        return $this->serializeLongString($buffer);
+        return $this->serializeByteArray($buffer);
+    }
+
+    /**
+     * Serialize a table or array field.
+     *
+     * @param mixed $value
+     *
+     * @return string The serialized value.
+     */
+    private function serializeField($value)
+    {
+        if (is_string($value)) {
+            // @todo Could be decimal (D) or byte array (x)
+            // @link https://github.com/recoilphp/amqp/issues/25
+            return 'S' . $this->serializeLongString($value);
+        } elseif (is_integer($value)) {
+            // @todo Could be timestamp (T)
+            // @link https://github.com/recoilphp/amqp/issues/25
+            if ($value >= 0) {
+                if ($value < 0x80) {
+                    return 'b' . $this->serializeSignedInt8($value);
+                } elseif ($value < 0x8000) {
+                    return 's' . $this->serializeSignedInt16($value);
+                } elseif ($value < 0x80000000) {
+                    return 'I' . $this->serializeSignedInt32($value);
+                }
+            } else {
+                if ($value >= -0x80) {
+                    return 'b' . $this->serializeSignedInt8($value);
+                } elseif ($value >= -0x8000) {
+                    return 's' . $this->serializeSignedInt16($value);
+                } elseif ($value >= -0x80000000) {
+                    return 'I' . $this->serializeSignedInt32($value);
+                }
+            }
+
+            return 'l' . $this->serializeSignedInt64($value);
+        } elseif (true === $value) {
+            return "t\x01";
+        } elseif (false === $value) {
+            return "t\x00";
+        } elseif (null === $value) {
+            return 'V';
+        } elseif (is_double($value)) {
+            return 'd' . $this->serializeDouble($value);
+        } elseif (is_array($value)) {
+            return $this->serializeArrayOrTable($value);
+        } else {
+            throw new InvalidArgumentException('@todo');
+        }
+    }
+
+    /**
+     * Serialize a PHP array.
+     *
+     * If the array contains sequential integer keys, it is serialized as an AMQP
+     * array, otherwise it is serialized as an AMQP table.
+     *
+     * @param array $array
+     *
+     * @return string The binary serialized table.
+     */
+    private function serializeArrayOrTable(array $array)
+    {
+        $assoc  = false;
+        $index  = 0;
+        $values = [];
+
+        foreach ($array as $key => $value) {
+            // We already know the array is associative, serialize both the key
+            // and the value ...
+            if ($assoc) {
+                $values[] = $this->serializeShortString($key)
+                          . $this->serializeField($value);
+
+            // Otherwise, if the key matches the index counter it is sequential,
+            // only serialize the value ...
+            } elseif ($key === $index++) {
+                $values[] = $this->serializeField($value);
+
+            // Otherwise, we've just discovered the array is NOT sequential,
+            // Go back through the existing values and add the keys ...
+            } else {
+                $assoc = true;
+                $rebuild = [];
+
+                foreach ($values as $k => $v) {
+                    $rebuild[] = $this->serializeShortString($k) . $v;
+                }
+
+                $values = $rebuild;
+            }
+        }
+
+        return ($assoc ? 'F' : 'A') . $this->serializeByteArray(
+            implode('', $values)
+        );
+    }
+
+    /**
+     * Serialize a byte-array.
+     *
+     * @param string $value The value to serialize.
+     *
+     * @return string The serialized value.
+     */
+    private function serializeByteArray($value)
+    {
+        return pack('N', strlen($value)) . $value;
     }
 
     use ScalarSerializerTrait;

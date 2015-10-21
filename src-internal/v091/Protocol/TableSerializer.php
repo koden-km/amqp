@@ -12,7 +12,7 @@ interface TableSerializer
     /**
      * Serialize an AMQP table.
      *
-     * @param array The table.
+     * @param array $table The table.
      *
      * @return string                   The binary serialized table.
      * @throws InvalidArgumentException if the table contains unserializable

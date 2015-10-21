@@ -70,14 +70,12 @@ class SigTableParserTest extends PHPUnit_Framework_TestCase
         ];
 
         yield 'float (f)' => [
-            "\x00\x00\x00\x09"
-            . "\x03key" . "f\x40\x49\x0e\x56",
+            "\x00\x00\x00\x09" . "\x03key" . "f\x40\x49\x0e\x56",
             ['key' => 3.1414999961853027],
         ];
 
         yield 'double (d)' => [
-            "\x00\x00\x00\x0d"
-            . "\x03key" . "d\x40\x09\x21\xCA\xC0\x83\x12\x6F",
+            "\x00\x00\x00\x0d" . "\x03key" . "d\x40\x09\x21\xCA\xC0\x83\x12\x6F",
             ['key' => 3.14150000000000018118839761883],
         ];
 
@@ -127,7 +125,7 @@ class SigTableParserTest extends PHPUnit_Framework_TestCase
         ];
 
         yield 'array (A)' => [
-            "\x00\x00\x00\x0e" . "\x03key" . "A\x00\x00\x00\x06b\x01b\x02b\x03",
+            "\x00\x00\x00\x0f" . "\x03key" . "A\x00\x00\x00\x06b\x01b\x02b\x03",
             ['key' => [1, 2, 3]],
         ];
 
