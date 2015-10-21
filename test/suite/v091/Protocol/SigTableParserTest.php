@@ -20,9 +20,7 @@ class SigTableParserTest extends PHPUnit_Framework_TestCase
         ];
 
         yield 'boolean (t)' => [
-            "\x00\x00\x00\x0f"
-            . "\x04true" . "t\x01"
-            . "\x05false" . "t\x00",
+            "\x00\x00\x00\x0f" . "\x04true" . "t\x01" . "\x05false" . "t\x00",
             [
                 'true' => true,
                 'false' => false,
@@ -139,11 +137,11 @@ class SigTableParserTest extends PHPUnit_Framework_TestCase
             ['key' => '18446744073709551615'],
         ];
 
-        $nested = "\x00\x00\x00\x0e" . "\x03key" . "S\x00\x00\x00\x05value";
+        $nested = "\x00\x00\x00\x08" . "\x01a" . "b\x01" . "\x01b" . "b\x02";
 
         yield 'nested table (F)' => [
-            "\x00\x00\x00\x1A" . "\x06nested" . 'F' . $nested,
-            ['nested' => ['key' => 'value']],
+            "\x00\x00\x00\x14" . "\x06nested" . 'F' . $nested,
+            ['nested' => ['a' => 1, 'b' => 2]],
         ];
 
         yield 'void (V)' => [

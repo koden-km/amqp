@@ -2,8 +2,9 @@
 
 namespace Recoil\Amqp\v091\Protocol;
 
+use Icecave\Repr\Repr;
+use InvalidArgumentException;
 use PHPUnit_Framework_TestCase;
-use Recoil\Amqp\Exception\ProtocolException;
 
 class SigTableSerializerTest extends PHPUnit_Framework_TestCase
 {
@@ -24,40 +25,38 @@ class SigTableSerializerTest extends PHPUnit_Framework_TestCase
                 'true' => true,
                 'false' => false,
             ],
-            "\x00\x00\x00\x0f"
-            . "\x04true" . "t\x01"
-            . "\x05false" . "t\x00",
+            "\x00\x00\x00\x0f" . "\x04true" . "t\x01" . "\x05false" . "t\x00",
         ];
 
-        // yield 'signed octet - pos (b)' => [
-        //     ['key' => 127],
-        //     "\x00\x00\x00\x06" . "\x03key" . "b\x7f",
-        // ];
+        yield 'signed octet - pos (b)' => [
+            ['key' => 127],
+            "\x00\x00\x00\x06" . "\x03key" . "b\x7f",
+        ];
 
-        // yield 'signed octet - neg (b)' => [
-        //     ['key' => -2],
-        //     "\x00\x00\x00\x06" . "\x03key" . "b\xfe",
-        // ];
+        yield 'signed octet - neg (b)' => [
+            ['key' => -128],
+            "\x00\x00\x00\x06" . "\x03key" . "b\x80",
+        ];
 
-        // yield 'signed short - pos (s)' => [
-        //     ['key' => 32767],
-        //     "\x00\x00\x00\x07" . "\x03key" . "s\x7f\xff",
-        // ];
+        yield 'signed short - pos (s)' => [
+            ['key' => 32767],
+            "\x00\x00\x00\x07" . "\x03key" . "s\x7f\xff",
+        ];
 
-        // yield 'signed short - neg (s)' => [
-        //     ['key' => -2],
-        //     "\x00\x00\x00\x07" . "\x03key" . "s\xff\xfe",
-        // ];
+        yield 'signed short - neg (s)' => [
+            ['key' => -32768],
+            "\x00\x00\x00\x07" . "\x03key" . "s\x80\x00",
+        ];
 
-        // yield 'signed long - pos (I)' => [
-        //     ['key' => 2147483647],
-        //     "\x00\x00\x00\x09" . "\x03key" . "I\x7f\xff\xff\xff",
-        // ];
+        yield 'signed long - pos (I)' => [
+            ['key' => 2147483647],
+            "\x00\x00\x00\x09" . "\x03key" . "I\x7f\xff\xff\xff",
+        ];
 
-        // yield 'signed long - neg (I)' => [
-        //     ['key' => -2],
-        //     "\x00\x00\x00\x09" . "\x03key" . "I\xff\xff\xff\xfe",
-        // ];
+        yield 'signed long - neg (I)' => [
+            ['key' => -2147483648],
+            "\x00\x00\x00\x09" . "\x03key" . "I\x80\x00\x00\x00",
+        ];
 
         yield 'signed long long - pos (l)' => [
             ['key' => 9223372036854775807],
@@ -139,11 +138,18 @@ class SigTableSerializerTest extends PHPUnit_Framework_TestCase
         //     "\x00\x00\x00\x0d" . "\x03key" . "T\xff\xff\xff\xff\xff\xff\xff\xff",
         // ];
 
-        $nested = "\x00\x00\x00\x0e" . "\x03key" . "S\x00\x00\x00\x05value";
+        $nested = "\x00\x00\x00\x08" . "\x01a" . "b\x01" . "\x01b" . "b\x02";
 
         yield 'nested table (F)' => [
-            ['nested' => ['key' => 'value']],
-            "\x00\x00\x00\x1a" . "\x06nested" . 'F' . $nested,
+            ['nested' => ['a' => 1, 'b' => 2]],
+            "\x00\x00\x00\x14" . "\x06nested" . 'F' . $nested,
+        ];
+
+        $nested = "\x00\x00\x00\x0d" . "\x010" . "b\x00" . "\x011" . "b\x01" . "\x0220" . "b\x03";
+
+        yield 'nested table - appears sequential at first (F)' => [
+            ['nested' => [0 => 0, 1 => 1, 20 => 3]],
+            "\x00\x00\x00\x19" . "\x06nested" . 'F' . $nested,
         ];
 
         yield 'void (V)' => [
@@ -166,5 +172,17 @@ class SigTableSerializerTest extends PHPUnit_Framework_TestCase
             chunk_split(bin2hex($expected), 2, ' '),
             chunk_split(bin2hex($this->subject->serialize($table)), 2, ' ')
         );
+    }
+
+    public function testSerializeWithUnsupportedValue()
+    {
+        $value = (object) [];
+
+        $this->setExpectedException(
+            InvalidArgumentException::class,
+            'Could not serialize value (' . Repr::repr($value) .  ').'
+        );
+
+        $this->subject->serialize(['key' => $value]);
     }
 }

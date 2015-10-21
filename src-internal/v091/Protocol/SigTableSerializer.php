@@ -2,6 +2,7 @@
 
 namespace Recoil\Amqp\v091\Protocol;
 
+use Icecave\Repr\Repr;
 use InvalidArgumentException;
 
 /**
@@ -84,7 +85,9 @@ final class SigTableSerializer implements TableSerializer
         } elseif (is_array($value)) {
             return $this->serializeArrayOrTable($value);
         } else {
-            throw new InvalidArgumentException('@todo');
+            throw new InvalidArgumentException(
+                'Could not serialize value (' . Repr::repr($value) . ').'
+            );
         }
     }
 
@@ -119,14 +122,14 @@ final class SigTableSerializer implements TableSerializer
             // Otherwise, we've just discovered the array is NOT sequential,
             // Go back through the existing values and add the keys ...
             } else {
-                $assoc = true;
-                $rebuild = [];
-
                 foreach ($values as $k => $v) {
-                    $rebuild[] = $this->serializeShortString($k) . $v;
+                    $values[$k] = $this->serializeShortString($k) . $v;
                 }
 
-                $values = $rebuild;
+                $values[] = $this->serializeShortString($key)
+                          . $this->serializeField($value);
+
+                $assoc = true;
             }
         }
 
