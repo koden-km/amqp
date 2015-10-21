@@ -34,4 +34,80 @@ trait ScalarSerializerTrait
     {
         return pack('N', strlen($value)) . $value;
     }
+
+    /**
+     * Serialize a 8-bit signed integer.
+     *
+     * @param integer $value The value to serialize.
+     *
+     * @return string The serialized value.
+     */
+    private function serializeSignedInt8($value)
+    {
+        if ($value < 0) {
+            $value += 0x100;
+        }
+
+        return chr($value);
+    }
+
+    /**
+     * Serialize a 16-bit signed integer.
+     *
+     * @param integer $value The value to serialize.
+     *
+     * @return string The serialized value.
+     */
+    private function serializeSignedInt16($value)
+    {
+        if ($value < 0) {
+            $value += 0x10000;
+        }
+
+        return pack('n', $value);
+    }
+
+    /**
+     * Serialize a 32-bit signed integer.
+     *
+     * @param integer $value The value to serialize.
+     *
+     * @return string The serialized value.
+     */
+    private function serializeSignedInt32($value)
+    {
+        if ($value < 0) {
+            $value += 0x100000000;
+        }
+
+        return pack('N', $value);
+    }
+
+    /**
+     * Serialize a 64-bit signed integer.
+     *
+     * @param integer $value The value to serialize.
+     *
+     * @return string The serialized value.
+     */
+    private function serializeSignedInt64($value)
+    {
+        return pack('J', $value);
+    }
+
+    /**
+     * Serialize a double (8-byte).
+     *
+     * @param float $value The value to serialize.
+     *
+     * @return string The serialized value.
+     */
+    public function serializeDouble($value)
+    {
+        if (Endianness::LITTLE) {
+            return strrev(pack('d', $value));
+        } else {
+            return pack('d', $value);
+        }
+    }
 }

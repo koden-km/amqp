@@ -28,6 +28,7 @@
         "eloquent/enumeration": "^5.1",
         "icecave/flip": "dev-develop",
         "icecave/isolator": "~3",
+        "icecave/repr": "^1.0",
         "react/event-loop": "^0.4",
         "react/promise": "^2.2",
         "react/stream": "^0.4.3"

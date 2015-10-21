@@ -52,7 +52,7 @@ final class SigTableParser implements TableParser
     }
 
     /**
-     * Parse a table value.
+     * Parse a table or array field.
      *
      * @return mixed
      */
