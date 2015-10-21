@@ -23,7 +23,7 @@ final class PublishOption
      * Only place a message on a queue if there are currently ready consumers
      * on that queue.
      *
-     * @deprecated This feature is no longer supported by Rabbit MQ.
+     * @deprecated This feature is no longer supported by RabbitMQ.
      * @link http://www.rabbitmq.com/blog/2012/11/19/breaking-things-with-rabbitmq-3-0/
      */
     private $immediate = false;
