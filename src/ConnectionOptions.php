@@ -91,7 +91,26 @@ final class ConnectionOptions
      */
     public function productName()
     {
-        return PackageInfo::NAME; // TODO make property
+        return $this->productName;
+    }
+
+    /**
+     * Set the product name to report to the server.
+     *
+     * @param string $name The product name.
+     *
+     * @return ConnectionOptions
+     */
+    public function setProductName($name)
+    {
+        if ($name === $this->productName) {
+            return $this;
+        }
+
+        $connectionOptions = clone $this;
+        $connectionOptions->productName = $name;
+
+        return $connectionOptions;
     }
 
     /**
@@ -101,17 +120,84 @@ final class ConnectionOptions
      */
     public function productVersion()
     {
-        return PackageInfo::VERSION; // TODO make property
+        return $this->productVersion;
     }
 
     /**
-     * The maximum time to allow for the connection to be established.
+     * Set the product version to report to the server.
      *
-     * @return integer|float The timeout, in seconds.
+     * @param string $version The product version.
+     *
+     * @return ConnectionOptions
      */
-    public function timeout()
+    public function setProductVersion($version)
     {
-        return 3; // TODO make property
+        if ($version === $this->productVersion) {
+            return $this;
+        }
+
+        $connectionOptions = clone $this;
+        $connectionOptions->productVersion = $version;
+
+        return $connectionOptions;
+    }
+
+    /**
+     * Get the maximum time to allow for the connection to be established.
+     *
+     * @return integer|float|null The timeout, in seconds.
+     */
+    public function connectionTimeout()
+    {
+        return $this->connectionTimeout;
+    }
+
+    /**
+     * Set the maximum time to allow for the connection to be established.
+     *
+     * @param integer|float|null $timeout The timeout, in seconds.
+     *
+     * @return ConnectionOptions
+     */
+    public function setConnectionTimeout($timeout)
+    {
+        if ($timeout === $this->connectionTimeout) {
+            return $this;
+        }
+
+        $connectionOptions = clone $this;
+        $connectionOptions->connectionTimeout = $timeout;
+
+        return $connectionOptions;
+    }
+
+    /**
+     * Get how often the server and client must send heartbeat packets to keep the connection alive.
+     *
+     * @return integer|float|null The timeout, in seconds.
+     */
+    public function heartbeatTimeout()
+    {
+        return $this->heartbeatTimeout;
+    }
+
+    /**
+     * Set how often the server and client must send heartbeat packets to keep the connection alive.
+     *
+     * @param integer|float|null $timeout The timeout, in seconds.
+     *
+     * @return ConnectionOptions
+     */
+    public function setHeartbeatTimeout($timeout)
+    {
+        if ($timeout === $this->heartbeatTimeout) {
+            return $this;
+        }
+
+        $connectionOptions = clone $this;
+        $connectionOptions->heartbeatTimeout = $timeout;
+
+        return $connectionOptions;
     }
 
     /**
@@ -128,6 +214,10 @@ final class ConnectionOptions
         $this->username = $username;
         $this->password = $password;
         $this->vhost = $vhost;
+        $this->productName = PackageInfo::NAME;
+        $this->productVersion = PackageInfo::VERSION;
+        $this->connectionTimeout = null;
+        $this->heartbeatTimeout = null;
     }
 
     private $host;
@@ -135,4 +225,8 @@ final class ConnectionOptions
     private $username;
     private $password;
     private $vhost;
+    private $productName;
+    private $productVersion;
+    private $connectionTimeout;
+    private $heartbeatTimeout;
 }
