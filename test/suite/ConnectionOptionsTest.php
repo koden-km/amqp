@@ -64,13 +64,13 @@ class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
             $this->subject->productName()
         );
 
-        $newSubject = $this->subject->setProductName(
+        $options = $this->subject->setProductName(
             '<productName>'
         );
 
         $this->assertSame(
             '<productName>',
-            $newSubject->productName()
+            $options->productName()
         );
 
         $this->assertSame(
@@ -81,13 +81,13 @@ class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
 
     public function testProductNameWithNoChange()
     {
-        $newSubject = $this->subject->setProductName(
+        $options = $this->subject->setProductName(
             PackageInfo::NAME
         );
 
         $this->assertSame(
             $this->subject,
-            $newSubject
+            $options
         );
     }
 
@@ -98,13 +98,13 @@ class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
             $this->subject->productVersion()
         );
 
-        $newSubject = $this->subject->setProductVersion(
+        $options = $this->subject->setProductVersion(
             '<productVersion>'
         );
 
         $this->assertSame(
             '<productVersion>',
-            $newSubject->productVersion()
+            $options->productVersion()
         );
 
         $this->assertSame(
@@ -115,13 +115,13 @@ class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
 
     public function testProductVersionWithNoChange()
     {
-        $newSubject = $this->subject->setProductVersion(
+        $options = $this->subject->setProductVersion(
             PackageInfo::VERSION
         );
 
         $this->assertSame(
             $this->subject,
-            $newSubject
+            $options
         );
     }
 
@@ -131,13 +131,13 @@ class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
             $this->subject->connectionTimeout()
         );
 
-        $newSubject = $this->subject->setConnectionTimeout(
+        $options = $this->subject->setConnectionTimeout(
             120
         );
 
         $this->assertSame(
             120,
-            $newSubject->connectionTimeout()
+            $options->connectionTimeout()
         );
 
         $this->assertNull(
@@ -147,13 +147,13 @@ class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
 
     public function testConnectionTimeoutWithNoChange()
     {
-        $newSubject = $this->subject->setConnectionTimeout(
+        $options = $this->subject->setConnectionTimeout(
             null
         );
 
         $this->assertSame(
             $this->subject,
-            $newSubject
+            $options
         );
     }
 
@@ -163,13 +163,13 @@ class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
             $this->subject->heartbeatTimeout()
         );
 
-        $newSubject = $this->subject->setHeartbeatTimeout(
+        $options = $this->subject->setHeartbeatTimeout(
             120
         );
 
         $this->assertSame(
             120,
-            $newSubject->heartbeatTimeout()
+            $options->heartbeatTimeout()
         );
 
         $this->assertNull(
@@ -179,13 +179,13 @@ class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
 
     public function testHeartbeatTimeoutWithNoChange()
     {
-        $newSubject = $this->subject->setHeartbeatTimeout(
+        $options = $this->subject->setHeartbeatTimeout(
             null
         );
 
         $this->assertSame(
             $this->subject,
-            $newSubject
+            $options
         );
     }
 }

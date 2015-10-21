@@ -145,7 +145,7 @@ final class HandshakeController implements TransportController
         $this->deferred->reject(
             ConnectionException::handshakeFailed(
                 $this->options,
-                'the handshake timed out after ' . $this->options->timeout() . ' seconds'
+                'the handshake timed out after ' . $this->options->connectionTimeout() . ' seconds'
             )
         );
     }

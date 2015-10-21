@@ -107,10 +107,10 @@ final class ConnectionOptions
             return $this;
         }
 
-        $connectionOptions = clone $this;
-        $connectionOptions->productName = $name;
+        $options = clone $this;
+        $options->productName = $name;
 
-        return $connectionOptions;
+        return $options;
     }
 
     /**
@@ -136,10 +136,10 @@ final class ConnectionOptions
             return $this;
         }
 
-        $connectionOptions = clone $this;
-        $connectionOptions->productVersion = $version;
+        $options = clone $this;
+        $options->productVersion = $version;
 
-        return $connectionOptions;
+        return $options;
     }
 
     /**
@@ -165,10 +165,10 @@ final class ConnectionOptions
             return $this;
         }
 
-        $connectionOptions = clone $this;
-        $connectionOptions->connectionTimeout = $timeout;
+        $options = clone $this;
+        $options->connectionTimeout = $timeout;
 
-        return $connectionOptions;
+        return $options;
     }
 
     /**
@@ -194,10 +194,10 @@ final class ConnectionOptions
             return $this;
         }
 
-        $connectionOptions = clone $this;
-        $connectionOptions->heartbeatTimeout = $timeout;
+        $options = clone $this;
+        $options->heartbeatTimeout = $timeout;
 
-        return $connectionOptions;
+        return $options;
     }
 
     /**

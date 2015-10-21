@@ -43,6 +43,8 @@ class Amqp091ConnectorTest extends PHPUnit_Framework_TestCase
             $this->stream->mock()
         );
 
+        $this->isolator->ini_get->with('default_socket_timeout')->returns(false);
+
         // Transport and controllers ...
         $this->transport = Phony::fullMock(Transport::class);
         $this->handshakeController = Phony::fullMock(TransportController::class);
@@ -85,7 +87,7 @@ class Amqp091ConnectorTest extends PHPUnit_Framework_TestCase
                 'tcp://localhost:5672',
                 null,
                 null,
-                $this->options->timeout(),
+                3,
                 STREAM_CLIENT_CONNECT // | STREAM_CLIENT_ASYNC_CONNECT
             ),
             $this->isolator->stream_set_blocking->calledWith(
@@ -100,7 +102,7 @@ class Amqp091ConnectorTest extends PHPUnit_Framework_TestCase
                 HandshakeController::class,
                 $this->loop->mock(),
                 $this->options,
-                $this->options->timeout() - 1.5 // 1.5 diff between microtime() calls
+                3 - 1.5 // 1.5 diff between microtime() calls
             ),
             $this->handshakeController->start->calledWith(
                 $this->transport->mock()

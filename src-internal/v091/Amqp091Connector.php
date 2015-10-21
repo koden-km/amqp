@@ -41,8 +41,20 @@ final class Amqp091Connector implements Connector
         $iso = $this->isolator();
         $start = $iso->microtime(true);
 
+        $connectionTimeout = $options->connectionTimeout();
+        if (null === $connectionTimeout) {
+            $defaultSocketTimeout = $iso->ini_get('default_socket_timeout');
+            if (false === $defaultSocketTimeout) {
+                $defaultSocketTimeout = self::DEFAULT_SOCKET_TIMEOUT;
+            }
+            $connectionTimeout = (float)$defaultSocketTimeout;
+        }
+
         try {
-            $fd = $this->openConnection($options);
+            $fd = $this->openConnection(
+                $options,
+                $connectionTimeout
+            );
         } catch (Exception $e) {
             return reject($e);
         }
@@ -69,7 +81,7 @@ final class Amqp091Connector implements Connector
             HandshakeController::class,
             $this->loop,
             $options,
-            $options->timeout() - $elapsed
+            $connectionTimeout - $elapsed
         );
 
         // Start the AMQP handshake ...
@@ -99,12 +111,15 @@ final class Amqp091Connector implements Connector
 
     /**
      * @param ConnectionOptions $options
+     * @param integer|float     $connectionTimeout
      *
      * @return tuple<resource,     float> A 2-tuple containing the stream resource and the time taken to connect, in seconds.
      * @throws ConnectionException
      */
-    private function openConnection(ConnectionOptions $options)
-    {
+    private function openConnection(
+        ConnectionOptions $options,
+        $connectionTimeout
+    ) {
         $iso = $this->isolator();
 
         $errorCode = null;
@@ -118,7 +133,7 @@ final class Amqp091Connector implements Connector
             ),
             $errorCode,
             $errorMessage,
-            $options->timeout(),
+            $connectionTimeout,
 
             // @todo Connect asynchronously.
             // @link https://github.com/recoilphp/amqp/issues/22
@@ -138,6 +153,8 @@ final class Amqp091Connector implements Connector
     }
 
     use IsolatorTrait;
+
+    const DEFAULT_SOCKET_TIMEOUT = 3;
 
     /**
      * @var LoopInterface The event loop that services connections created by this connector.

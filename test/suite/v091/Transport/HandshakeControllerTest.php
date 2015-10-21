@@ -26,7 +26,7 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
     {
         $this->loop = Phony::fullMock(LoopInterface::class);
         $this->timer = Phony::fullMock(TimerInterface::class);
-        $this->options = ConnectionOptions::create();
+        $this->options = ConnectionOptions::create()->setConnectionTimeout(3);
         $this->timeout = 3.1415;
         $this->transport = Phony::fullMock(Transport::class);
         $this->transportBuilder = new MockTransportBuilder($this, $this->transport);
