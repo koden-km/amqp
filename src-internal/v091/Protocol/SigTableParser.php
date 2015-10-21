@@ -34,7 +34,7 @@ final class SigTableParser implements TableParser
     }
 
     /**
-     * Parse an AMQP "field table" from the head of the buffer.
+     * Parse an AMQP table from the head of the buffer.
      *
      * @return array
      */
@@ -52,7 +52,7 @@ final class SigTableParser implements TableParser
     }
 
     /**
-     * Parse an AMQP field-table value.
+     * Parse a table value.
      *
      * @return mixed
      */
@@ -61,6 +61,7 @@ final class SigTableParser implements TableParser
         $type = $this->buffer[0];
         $this->buffer = substr($this->buffer, 1);
 
+        // @todo bench switch vs if vs method map
         switch ($type) {
             case 's': return $this->parseSignedInt16();
             case 'l': return $this->parseSignedInt64();
@@ -80,11 +81,90 @@ final class SigTableParser implements TableParser
 
         throw ProtocolException::create(
             sprintf(
-                'Field-table value type (0x%02x) is invalid or unrecognised.',
+                'table value type (0x%02x) is invalid or unrecognised.',
                 ord($type)
             )
         );
     }
+
+    /**
+     * Parse an AMQP decimal from the head of the buffer.
+     *
+     * @return float
+     */
+    public function parseDecimal()
+    {
+        $scale = $this->parseUnsignedInt8();
+        $value = $this->parseSignedInt32();
+
+        if (0 === $scale) {
+            return (string) $value;
+        }
+
+        if ($value >= 0) {
+            $sign = '';
+            $value = (string) $value;
+        } else {
+            $sign = '-';
+            $value = (string) -$value;
+        }
+
+        $length = strlen($value);
+
+        if ($length === $scale) {
+            return $sign . '0.' . $value;
+        } elseif ($length < $scale) {
+            return $sign . '0.' . str_repeat('0', $scale - $length) . $value;
+        }
+
+        return $sign . substr($value, 0, -$scale) . '.' . substr($value, -$scale);
+    }
+
+    /**
+     * Parse a float (4-byte) from the head of the buffer.
+     *
+     * @return float
+     */
+    public function parseFloat()
+    {
+        if (null === self::$littleEndian) {
+            // S = machine order unsigned short, v = little-endian order
+            self::$littleEndian = pack('S', 1) === pack('v', 1);
+        }
+
+        try {
+            if (self::$littleEndian) {
+                return unpack('f', strrev(substr($this->buffer, 0, 4)))[1];
+            } else {
+                return unpack('f', $this->buffer)[1];
+            }
+        } finally {
+            $this->buffer = substr($this->buffer, 4);
+        }
+    } // @codeCoverageIgnore
+
+    /**
+     * Parse a double (8-byte) from the head of the buffer.
+     *
+     * @return float
+     */
+    public function parseDouble()
+    {
+        if (null === self::$littleEndian) {
+            // S = machine order unsigned short, v = little-endian order
+            self::$littleEndian = pack('S', 1) === pack('v', 1);
+        }
+
+        try {
+            if (self::$littleEndian) {
+                return unpack('d', strrev(substr($this->buffer, 0, 8)))[1];
+            } else {
+                return unpack('d', $this->buffer)[1];
+            }
+        } finally {
+            $this->buffer = substr($this->buffer, 8);
+        }
+    } // @codeCoverageIgnore
 
     /**
      * Parse an AMQP field-array value.
@@ -118,7 +198,7 @@ final class SigTableParser implements TableParser
         } finally {
             $this->buffer = substr($this->buffer, $length + 4);
         }
-    }
+    } // @codeCoverageIgnore
 
     use ScalarParserTrait;
 

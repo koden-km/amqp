@@ -246,7 +246,7 @@ final class Attributes implements IteratorAggregate
     public function getIterator()
     {
         foreach ($this->attributes as $name => $value) {
-            yield strval($name) => $value;
+            yield (string) $name => $value;
         }
     }
 

@@ -3,6 +3,7 @@
 namespace Recoil\Amqp\v091\Protocol;
 
 use Recoil\Amqp\Exception\ProtocolException;
+
 /**
  * Produces Frame objects from binary data.
  *

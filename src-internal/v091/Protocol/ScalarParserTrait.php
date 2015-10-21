@@ -26,7 +26,7 @@ trait ScalarParserTrait
         } finally {
             $this->buffer = substr($this->buffer, $length + 1);
         }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * Parse an AMQP "long string" from the head of the buffer.
@@ -43,7 +43,7 @@ trait ScalarParserTrait
         } finally {
             $this->buffer = substr($this->buffer, $length + 4);
         }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * Parse a 8-bit signed integer from the head of the buffer.
@@ -63,7 +63,7 @@ trait ScalarParserTrait
         } finally {
             $this->buffer = substr($this->buffer, 1);
         }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * Parse a 8-bit unsigned integer from the head of the buffer.
@@ -77,7 +77,7 @@ trait ScalarParserTrait
         } finally {
             $this->buffer = substr($this->buffer, 1);
         }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * Parse a 16-bit signed integer from the head of the buffer.
@@ -97,7 +97,7 @@ trait ScalarParserTrait
         } finally {
             $this->buffer = substr($this->buffer, 2);
         }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * Parse a 16-bit unsigned integer from the head of the buffer.
@@ -111,7 +111,7 @@ trait ScalarParserTrait
         } finally {
             $this->buffer = substr($this->buffer, 2);
         }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * Parse a 32-bit signed integer from the head of the buffer.
@@ -131,7 +131,7 @@ trait ScalarParserTrait
         } finally {
             $this->buffer = substr($this->buffer, 4);
         }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * Parse a 32-bit unsigned integer from the head of the buffer.
@@ -145,7 +145,7 @@ trait ScalarParserTrait
         } finally {
             $this->buffer = substr($this->buffer, 4);
         }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * Parse a 64-bit signed integer from the head of the buffer.
@@ -161,7 +161,7 @@ trait ScalarParserTrait
         } finally {
             $this->buffer = substr($this->buffer, 8);
         }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * Parse a 64-bit unsigned integer from the head of the buffer.
@@ -182,66 +182,7 @@ trait ScalarParserTrait
         } finally {
             $this->buffer = substr($this->buffer, 8);
         }
-    }
-
-    /**
-     * Parse an AMQP decimal from the head of the buffer.
-     *
-     * @return float
-     */
-    public function parseDecimal()
-    {
-        $scale = $this->parseUnsignedInt8();
-        $value = $this->parseUnsignedInt32();
-
-        return $value * pow(10, $scale);
-    }
-
-    /**
-     * Parse a float (4-byte) from the head of the buffer.
-     *
-     * @return float
-     */
-    public function parseFloat()
-    {
-        if (null === self::$littleEndian) {
-            // S = machine order unsigned short, v = little-endian order
-            self::$littleEndian = pack('S', 1) === pack('v', 1);
-        }
-
-        try {
-            if (self::$littleEndian) {
-                return unpack('f', strrev(substr($buffer, 0, 4)));
-            } else {
-                return unpack('f', $this->buffer);
-            }
-        } finally {
-            $this->buffer = substr($this->buffer, 4);
-        }
-    }
-
-    /**
-     * Parse a double (8-byte) from the head of the buffer.
-     *
-     * @return float
-     */
-    public function parseDouble()
-    {
-        if (null === self::$littleEndian) {
-            // S = machine order unsigned short, v = little-endian order
-            self::$littleEndian = pack('S', 1) === pack('v', 1);
-        }
-
-        try {
-            if (self::$littleEndian) {
-                return unpack('d', strrev(substr($buffer, 0, 8)));
-            } else {
-                return unpack('d', $this->buffer);
-            }
-        } finally {
-            $this->buffer = substr($this->buffer, 8);
-        }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * @var boolean True if the current machine uses little-endian byte-order.
