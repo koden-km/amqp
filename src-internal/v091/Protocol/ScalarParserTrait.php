@@ -191,13 +191,8 @@ trait ScalarParserTrait
      */
     public function parseFloat()
     {
-        if (null === self::$littleEndian) {
-            // S = machine order unsigned short, v = little-endian order
-            self::$littleEndian = pack('S', 1) === pack('v', 1);
-        }
-
         try {
-            if (self::$littleEndian) {
+            if (Endianness::LITTLE) {
                 return unpack('f', strrev(substr($this->buffer, 0, 4)))[1];
             } else {
                 return unpack('f', $this->buffer)[1];
@@ -214,13 +209,8 @@ trait ScalarParserTrait
      */
     public function parseDouble()
     {
-        if (null === self::$littleEndian) {
-            // S = machine order unsigned short, v = little-endian order
-            self::$littleEndian = pack('S', 1) === pack('v', 1);
-        }
-
         try {
-            if (self::$littleEndian) {
+            if (Endianness::LITTLE) {
                 return unpack('d', strrev(substr($this->buffer, 0, 8)))[1];
             } else {
                 return unpack('d', $this->buffer)[1];
@@ -229,9 +219,4 @@ trait ScalarParserTrait
             $this->buffer = substr($this->buffer, 8);
         }
     } // @codeCoverageIgnore
-
-    /**
-     * @var boolean True if the current machine uses little-endian byte-order.
-     */
-    private static $littleEndian;
 }

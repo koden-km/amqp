@@ -13,7 +13,7 @@ use Recoil\Amqp\Exception\ProtocolException;
 final class GeneratedFrameParser implements FrameParser
 {
     /**
-     * @param TableParser The parser used to parse AMQP tables.
+     * @param TableParser $tableParser The parser used to parse AMQP tables.
      */
     public function __construct(TableParser $tableParser)
     {

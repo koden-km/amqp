@@ -136,7 +136,7 @@ final class FrameSerializerTraitGenerator implements CodeGenerator
             } elseif ($type === 'longstr') {
                 yield '                     . $this->serializeLongString($frame->' . $this->toCamelCase($argument->name) . ')';
             } elseif ($type === 'table') {
-                yield '                     . $this->serializeTable($frame->' . $this->toCamelCase($argument->name) . ')';
+                yield '                     . $this->tableSerializer->serialize($frame->' . $this->toCamelCase($argument->name) . ')';
             } else {
                 // @codeCoverageIgnoreStart
                 throw new RuntimeException('Unknown type: ' . $type . '.');

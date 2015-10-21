@@ -9,7 +9,7 @@ trait FrameSerializerTrait
             return $this->serializeHeartbeatFrame();
         } elseif ($frame instanceof Connection\ConnectionStartOkFrame) {
             $payload = "\x00\x0a\x00\x0b"
-                     . $this->serializeTable($frame->clientProperties)
+                     . $this->tableSerializer->serialize($frame->clientProperties)
                      . $this->serializeShortString($frame->mechanism)
                      . $this->serializeLongString($frame->response)
                      . $this->serializeShortString($frame->locale)
@@ -99,7 +99,7 @@ trait FrameSerializerTrait
                          | $frame->internal << 3
                          | $frame->nowait << 4
                      )
-                     . $this->serializeTable($frame->arguments)
+                     . $this->tableSerializer->serialize($frame->arguments)
                      ;
 
             return "\x01" . pack("nN", $frame->channel, strlen($payload)) . $payload . "\xce";
@@ -121,7 +121,7 @@ trait FrameSerializerTrait
                      . $this->serializeShortString($frame->source)
                      . $this->serializeShortString($frame->routingKey)
                      . ($frame->nowait ? "\x01" : "\x00")
-                     . $this->serializeTable($frame->arguments)
+                     . $this->tableSerializer->serialize($frame->arguments)
                      ;
 
             return "\x01" . pack("nN", $frame->channel, strlen($payload)) . $payload . "\xce";
@@ -132,7 +132,7 @@ trait FrameSerializerTrait
                      . $this->serializeShortString($frame->source)
                      . $this->serializeShortString($frame->routingKey)
                      . ($frame->nowait ? "\x01" : "\x00")
-                     . $this->serializeTable($frame->arguments)
+                     . $this->tableSerializer->serialize($frame->arguments)
                      ;
 
             return "\x01" . pack("nN", $frame->channel, strlen($payload)) . $payload . "\xce";
@@ -147,7 +147,7 @@ trait FrameSerializerTrait
                          | $frame->autoDelete << 3
                          | $frame->nowait << 4
                      )
-                     . $this->serializeTable($frame->arguments)
+                     . $this->tableSerializer->serialize($frame->arguments)
                      ;
 
             return "\x01" . pack("nN", $frame->channel, strlen($payload)) . $payload . "\xce";
@@ -158,7 +158,7 @@ trait FrameSerializerTrait
                      . $this->serializeShortString($frame->exchange)
                      . $this->serializeShortString($frame->routingKey)
                      . ($frame->nowait ? "\x01" : "\x00")
-                     . $this->serializeTable($frame->arguments)
+                     . $this->tableSerializer->serialize($frame->arguments)
                      ;
 
             return "\x01" . pack("nN", $frame->channel, strlen($payload)) . $payload . "\xce";
@@ -188,7 +188,7 @@ trait FrameSerializerTrait
                      . $this->serializeShortString($frame->queue)
                      . $this->serializeShortString($frame->exchange)
                      . $this->serializeShortString($frame->routingKey)
-                     . $this->serializeTable($frame->arguments)
+                     . $this->tableSerializer->serialize($frame->arguments)
                      ;
 
             return "\x01" . pack("nN", $frame->channel, strlen($payload)) . $payload . "\xce";
@@ -210,7 +210,7 @@ trait FrameSerializerTrait
                          | $frame->exclusive << 2
                          | $frame->nowait << 3
                      )
-                     . $this->serializeTable($frame->arguments)
+                     . $this->tableSerializer->serialize($frame->arguments)
                      ;
 
             return "\x01" . pack("nN", $frame->channel, strlen($payload)) . $payload . "\xce";
