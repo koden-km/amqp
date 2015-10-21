@@ -100,20 +100,6 @@ trait ScalarParserTrait
     } // @codeCoverageIgnore
 
     /**
-     * Parse a 16-bit unsigned integer from the head of the buffer.
-     *
-     * @return integer
-     */
-    private function parseUnsignedInt16()
-    {
-        try {
-            return unpack('n', $this->buffer)[1];
-        } finally {
-            $this->buffer = substr($this->buffer, 2);
-        }
-    } // @codeCoverageIgnore
-
-    /**
      * Parse a 32-bit signed integer from the head of the buffer.
      *
      * @return integer
@@ -195,7 +181,7 @@ trait ScalarParserTrait
             if (Endianness::LITTLE) {
                 return unpack('f', strrev(substr($this->buffer, 0, 4)))[1];
             } else {
-                return unpack('f', $this->buffer)[1];
+                return unpack('f', $this->buffer)[1]; // @codeCoverageIgnore
             }
         } finally {
             $this->buffer = substr($this->buffer, 4);
@@ -213,7 +199,7 @@ trait ScalarParserTrait
             if (Endianness::LITTLE) {
                 return unpack('d', strrev(substr($this->buffer, 0, 8)))[1];
             } else {
-                return unpack('d', $this->buffer)[1];
+                return unpack('d', $this->buffer)[1]; // @codeCoverageIgnore
             }
         } finally {
             $this->buffer = substr($this->buffer, 8);

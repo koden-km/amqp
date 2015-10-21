@@ -107,7 +107,7 @@ trait ScalarSerializerTrait
         if (Endianness::LITTLE) {
             return strrev(pack('d', $value));
         } else {
-            return pack('d', $value);
+            return pack('d', $value); // @codeCoverageIgnore
         }
     }
 }

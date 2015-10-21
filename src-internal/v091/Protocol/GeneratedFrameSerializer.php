@@ -21,11 +21,9 @@ final class GeneratedFrameSerializer implements FrameSerializer
     /**
      * Serialize a heartbeat frame.
      *
-     * @param HeartbeatFrame $frame The frame to serialize.
-     *
      * @return string The serialized frame.
      */
-    private function serializeHeartbeatFrame(HeartbeatFrame $frame)
+    private function serializeHeartbeatFrame()
     {
         // Cache the heartbeat frame buffer, as they can never differ ...
         if (null === self::$heartbeatBuffer) {
