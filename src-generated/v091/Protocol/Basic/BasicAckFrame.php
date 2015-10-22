@@ -6,18 +6,18 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 final class BasicAckFrame implements IncomingFrame, OutgoingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $deliveryTag; // longlong
     public $multiple; // bit
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $deliveryTag = null
       , $multiple = null
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->deliveryTag = null === $deliveryTag ? 0 : $deliveryTag;
         $frame->multiple = null === $multiple ? false : $multiple;
 

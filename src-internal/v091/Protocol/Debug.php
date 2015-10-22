@@ -24,7 +24,7 @@ final class Debug
 
         printf(
             '[%04x] SEND %s' . PHP_EOL,
-            $frame->channel,
+            $frame->frameChannelId,
             $name
         );
 
@@ -44,7 +44,7 @@ final class Debug
 
         printf(
             '[%04x] RECV %s' . PHP_EOL,
-            $frame->channel,
+            $frame->frameChannelId,
             $name
         );
 
@@ -60,7 +60,7 @@ final class Debug
         }
 
         $properties = get_object_vars($frame);
-        unset($properties['channel']);
+        unset($properties['channelId']);
 
         if (!$properties) {
             return;

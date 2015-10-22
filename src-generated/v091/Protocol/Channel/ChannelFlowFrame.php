@@ -6,16 +6,16 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 final class ChannelFlowFrame implements IncomingFrame, OutgoingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $active; // bit
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $active = null
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->active = $active;
 
         return $frame;

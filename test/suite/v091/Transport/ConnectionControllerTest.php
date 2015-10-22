@@ -9,14 +9,19 @@ use PHPUnit_Framework_TestCase;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Timer\TimerInterface;
 use Recoil\Amqp\ConnectionOptions;
+use Recoil\Amqp\Exception\ChannelException;
 use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\PromiseTestTrait;
+use Recoil\Amqp\v091\Protocol\Channel\ChannelCloseFrame;
+use Recoil\Amqp\v091\Protocol\Channel\ChannelCloseOkFrame;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenFrame;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenOkFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionCloseFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionCloseOkFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionStartFrame;
 use Recoil\Amqp\v091\Protocol\HeartbeatFrame;
+use Recoil\Amqp\v091\Protocol\Tx\TxCommitFrame;
+use Recoil\Amqp\v091\Protocol\Tx\TxCommitOkFrame;
 use RuntimeException;
 
 class ConnectionControllerTest extends PHPUnit_Framework_TestCase
@@ -30,6 +35,16 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         $this->handshakeResult = new HandshakeResult(100, 200, 300);
         $this->transport = Phony::mock(Transport::class);
         $this->transportBuilder = new MockTransportBuilder($this, $this->transport);
+
+        $this->transportBuilder->receiveOnSend(
+            ChannelOpenFrame::class,
+            ChannelOpenOkFrame::create()
+        );
+
+        $this->transportBuilder->receiveOnSend(
+            ChannelCloseFrame::class,
+            ChannelCloseOkFrame::create()
+        );
 
         $this->loop->addPeriodicTimer->returns($this->heartbeatTimer->mock());
         $this->loop->addTimer->returns($this->closeTimeoutTimer->mock());
@@ -95,7 +110,7 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testSendWhenNotOpen()
+    public function testSendWhenStateNotOpen()
     {
         $this->setExpectedException(
             ConnectionException::class,
@@ -167,13 +182,25 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
     {
         $this->subject->start($this->transport->mock());
 
-        $promise = $this->subject->wait(HeartbeatFrame::class, 123);
+        $this->subject->openChannel();
 
-        $this->subject->onFrame(
-            HeartbeatFrame::create()
-        );
+        $promise = $this->subject->wait(HeartbeatFrame::class, 1);
+
+        $this->subject->onFrame(HeartbeatFrame::create());
 
         $this->assertNotSettled($promise);
+    }
+
+    public function testWaitWithClosedChannelId()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $this->assertEquals(
+            ChannelException::notOpen(1),
+            $this->assertRejected(
+                $this->subject->wait(HeartbeatFrame::class, 1)
+            )
+        );
     }
 
     public function testWaitCancel()
@@ -183,14 +210,12 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         $promise = $this->subject->wait(HeartbeatFrame::class);
         $promise->cancel();
 
-        $this->subject->onFrame(
-            HeartbeatFrame::create()
-        );
+        $this->subject->onFrame(HeartbeatFrame::create());
 
         $this->assertNotSettled($promise);
     }
 
-    public function testWaitPromiseIsRejectedIfTransportClosed()
+    public function testWaitPromiseIsRejectedIfTransportClosedWithException()
     {
         $this->subject->start($this->transport->mock());
 
@@ -237,7 +262,7 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testWaitWhenNotOpen()
+    public function testWaitWhenStateNotOpen()
     {
         $this->assertEquals(
             ConnectionException::notOpen($this->options),
@@ -262,6 +287,8 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
             [$frame, $frame],
             $this->notifications($promise)
         );
+
+        $this->assertNotSettled($promise);
     }
 
     public function testListenCancel()
@@ -272,14 +299,14 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         $this->captureNotifications($promise);
         $promise->cancel();
 
-        $this->subject->onFrame(
-            HeartbeatFrame::create()
-        );
+        $this->subject->onFrame(HeartbeatFrame::create());
 
         $this->assertSame(
             [],
             $this->notifications($promise)
         );
+
+        $this->assertNotSettled($promise);
     }
 
     public function testListenNotifiesMultiplePromises()
@@ -305,6 +332,9 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
             [$frame],
             $this->notifications($promise2)
         );
+
+        $this->assertNotSettled($promise1);
+        $this->assertNotSettled($promise2);
     }
 
     public function testListenMatchesFrameType()
@@ -322,22 +352,38 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
             [],
             $this->notifications($promise)
         );
+
+        $this->assertNotSettled($promise);
     }
 
     public function testListenMatchesChannelId()
     {
         $this->subject->start($this->transport->mock());
 
-        $promise = $this->subject->listen(HeartbeatFrame::class, 123);
+        $this->subject->openChannel();
+
+        $promise = $this->subject->listen(HeartbeatFrame::class, 1);
         $this->captureNotifications($promise);
 
-        $this->subject->onFrame(
-            HeartbeatFrame::create()
-        );
+        $this->subject->onFrame(HeartbeatFrame::create());
 
         $this->assertSame(
             [],
             $this->notifications($promise)
+        );
+
+        $this->assertNotSettled($promise);
+    }
+
+    public function testListenWithClosedChannelId()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $this->assertEquals(
+            ChannelException::notOpen(1),
+            $this->assertRejected(
+                $this->subject->listen(HeartbeatFrame::class, 1)
+            )
         );
     }
 
@@ -362,11 +408,8 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
             [],
             $this->notifications($listenerPromise)
         );
-    }
 
-    public function testListenPromiseIsResolvedIfTransportClosed()
-    {
-        $this->markTestIncomplete();
+        $this->assertNotSettled($listenerPromise);
     }
 
     public function testListenPromiseIsRejectedIfTransportClosedWithException()
@@ -416,7 +459,7 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testListenWhenNotOpen()
+    public function testListenWhenStateNotOpen()
     {
         $this->assertEquals(
             ConnectionException::notOpen($this->options),
@@ -424,6 +467,182 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
                 $this->subject->listen(HeartbeatFrame::class)
             )
         );
+    }
+
+    public function testOpenChannel()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $promise = $this->subject->openChannel();
+
+        $this->transport->send->calledWith(ChannelOpenFrame::create(1));
+
+        $this->assertSame(
+            1,
+            $this->assertResolved($promise)
+        );
+    }
+
+    public function testOpenChannelWithNoAvailableChannels()
+    {
+        $this->handshakeResult->maximumChannelCount = 1;
+
+        $this->subject->start($this->transport->mock());
+
+        $this->subject->openChannel();
+
+        $this->assertEquals(
+            ChannelException::noAvailableChannels(),
+            $this->assertRejected(
+                $this->subject->openChannel()
+            )
+        );
+    }
+
+    public function testOpenChannelUsesSequentialIds()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $this->subject->openChannel();
+
+        $promise = $this->subject->openChannel();
+        $this->transport->send->calledWith(ChannelOpenFrame::create(2));
+
+        $this->assertSame(
+            2,
+            $this->assertResolved($promise)
+        );
+    }
+
+    public function testOpenChannelRecyclesIds()
+    {
+        $this->handshakeResult->maximumChannelCount = 2;
+
+        $this->subject->start($this->transport->mock());
+
+        $this->subject->openChannel();
+        $this->subject->openChannel();
+        $this->subject->closeChannel(1);
+
+        $this->assertSame(
+            1,
+            $this->assertResolved(
+                $this->subject->openChannel()
+            )
+        );
+
+        $this->assertEquals(
+            ChannelException::noAvailableChannels(),
+            $this->assertRejected(
+                $this->subject->openChannel()
+            )
+        );
+    }
+
+    public function testOpenChannelWhenStateNotOpen()
+    {
+        $this->assertEquals(
+            ConnectionException::notOpen($this->options),
+            $this->assertRejected(
+                $this->subject->openChannel()
+            )
+        );
+    }
+
+    public function testOpenChannelWithUnexpectedClose()
+    {
+        $this->transportBuilder->closeOnSend(ChannelOpenFrame::class);
+
+        $this->subject->start($this->transport->mock());
+
+        $promise = $this->subject->openChannel();
+
+        $this->assertEquals(
+            ConnectionException::closedUnexpectedly($this->options),
+            $this->assertRejected($promise)
+        );
+    }
+
+    public function testCloseChannel()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $this->subject->openChannel();
+
+        $promise = $this->subject->closeChannel(1);
+
+        $this->transport->send->calledWith(ChannelCloseFrame::create(1));
+
+        $this->assertResolved($promise);
+    }
+
+    public function testCloseChannelWhenChannelNotOpen()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $this->assertEquals(
+            ChannelException::notOpen(1),
+            $this->assertRejected(
+                $this->subject->closeChannel(1)
+            )
+        );
+    }
+
+    public function testCloseChannelWhenStateNotOpen()
+    {
+        $this->assertEquals(
+            ConnectionException::notOpen($this->options),
+            $this->assertRejected(
+                $this->subject->closeChannel(1)
+            )
+        );
+    }
+
+    public function testCloseChannelWithUnexpectedClose()
+    {
+        $this->transportBuilder->closeOnSend(ChannelCloseFrame::class);
+
+        $this->subject->start($this->transport->mock());
+
+        $this->subject->openChannel();
+        $promise = $this->subject->closeChannel(1);
+
+        $this->assertEquals(
+            ConnectionException::closedUnexpectedly($this->options),
+            $this->assertRejected($promise)
+        );
+    }
+
+    public function testServerInitializedChannelClose()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $this->subject->openChannel();
+
+        $waiterPromise = $this->subject->wait(HeartbeatFrame::class, 1);
+        $listenerPromise = $this->subject->listen(HeartbeatFrame::class, 1);
+
+        $this->subject->onFrame(ChannelCloseFrame::create(1));
+
+        $exception = ChannelException::closedUnexpectedly(
+            1,
+            new RuntimeException()
+        );
+
+        $this->assertEquals(
+            $exception,
+            $this->assertRejected($waiterPromise)
+        );
+
+        $this->assertEquals(
+            $exception,
+            $this->assertRejected($listenerPromise)
+        );
+    }
+
+    public function testServerInitializedChannelCloseWithError()
+    {
+        $this->markTestIncomplete();
     }
 
     public function testClose()
@@ -463,20 +682,15 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         $this->closeTimeoutTimer->cancel->called();
     }
 
-    public function testCloseWhenNotOpen()
+    public function testCloseWhenStateNotOpen()
     {
         $this->subject->close();
 
         $this->loop->noInteraction();
         $this->transport->noInteraction();
-
-        // silence risky test warning
-        // @todo remove this when bug fixed
-        // @link https://github.com/eloquent/phony/issues/83
-        $this->assertTrue(true);
     }
 
-    public function testServerInitializedClose()
+    public function testServerInitiatedClose()
     {
         $this->subject->start($this->transport->mock());
 
@@ -506,6 +720,11 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function testServerInitializedCloseWithError()
+    {
+        $this->markTestIncomplete();
+    }
+
     public function testHeartbeatSendsHeartbeatFrame()
     {
         $this->subject->start($this->transport->mock());
@@ -521,7 +740,8 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
     {
         $this->subject->start($this->transport->mock());
 
-        $this->subject->send(ChannelOpenFrame::create());
+        // test with a frame that is not directly meaningful to the controller
+        $this->subject->send(TxCommitFrame::create());
 
         $this->subject->onHeartbeat();
 
@@ -568,7 +788,8 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         $this->transport->close->never()->called();
         $this->heartbeatTimer->cancel->never()->called();
 
-        $this->subject->onFrame(ChannelOpenOkFrame::create());
+        // test with a frame that is not directly meaningful to the controller
+        $this->subject->onFrame(TxCommitOkFrame::create());
 
         $this->subject->onHeartbeat();
 

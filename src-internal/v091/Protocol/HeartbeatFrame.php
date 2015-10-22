@@ -11,7 +11,7 @@ final class HeartbeatFrame implements IncomingFrame, OutgoingFrame
     /**
      * @var integer Heartbeat frames are only sent on channel zero.
      */
-    public $channel = 0;
+    public $frameChannelId = 0;
 
     /**
      * Create/get a heartbeat frame.

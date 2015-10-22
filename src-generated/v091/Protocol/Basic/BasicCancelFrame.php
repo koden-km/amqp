@@ -5,18 +5,18 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 final class BasicCancelFrame implements OutgoingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $consumerTag; // shortstr
     public $nowait; // bit
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $consumerTag = null
       , $nowait = null
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->consumerTag = $consumerTag;
         $frame->nowait = null === $nowait ? false : $nowait;
 

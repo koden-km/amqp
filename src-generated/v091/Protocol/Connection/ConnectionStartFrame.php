@@ -5,7 +5,7 @@ use Recoil\Amqp\v091\Protocol\IncomingFrame;
 
 final class ConnectionStartFrame implements IncomingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $versionMajor; // octet
     public $versionMinor; // octet
     public $serverProperties; // table
@@ -13,7 +13,7 @@ final class ConnectionStartFrame implements IncomingFrame
     public $locales; // longstr
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $versionMajor = null
       , $versionMinor = null
       , $serverProperties = null
@@ -22,7 +22,7 @@ final class ConnectionStartFrame implements IncomingFrame
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->versionMajor = null === $versionMajor ? 0 : $versionMajor;
         $frame->versionMinor = null === $versionMinor ? 9 : $versionMinor;
         $frame->serverProperties = null === $serverProperties ? [] : $serverProperties;

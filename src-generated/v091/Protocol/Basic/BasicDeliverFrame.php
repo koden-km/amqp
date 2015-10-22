@@ -5,7 +5,7 @@ use Recoil\Amqp\v091\Protocol\IncomingFrame;
 
 final class BasicDeliverFrame implements IncomingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $consumerTag; // shortstr
     public $deliveryTag; // longlong
     public $redelivered; // bit
@@ -13,7 +13,7 @@ final class BasicDeliverFrame implements IncomingFrame
     public $routingKey; // shortstr
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $consumerTag = null
       , $deliveryTag = null
       , $redelivered = null
@@ -22,7 +22,7 @@ final class BasicDeliverFrame implements IncomingFrame
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->consumerTag = $consumerTag;
         $frame->deliveryTag = $deliveryTag;
         $frame->redelivered = null === $redelivered ? false : $redelivered;

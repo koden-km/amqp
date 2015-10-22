@@ -13,6 +13,7 @@ interface Connection
      * Create a new AMQP channel.
      *
      * @return Channel             [via promise] The newly created channel.
+     * @throws ChannelException    [via promise] If the channel could not be created.
      * @throws ConnectionException [via promise] If not connected to the AMQP server.
      */
     public function channel();

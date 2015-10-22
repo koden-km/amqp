@@ -5,16 +5,16 @@ use Recoil\Amqp\v091\Protocol\IncomingFrame;
 
 final class ConnectionBlockedFrame implements IncomingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $reason; // shortstr
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $reason = null
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->reason = null === $reason ? '' : $reason;
 
         return $frame;

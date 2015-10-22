@@ -5,14 +5,14 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 final class ConnectionStartOkFrame implements OutgoingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $clientProperties; // table
     public $mechanism; // shortstr
     public $response; // longstr
     public $locale; // shortstr
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $clientProperties = null
       , $mechanism = null
       , $response = null
@@ -20,7 +20,7 @@ final class ConnectionStartOkFrame implements OutgoingFrame
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->clientProperties = null === $clientProperties ? [] : $clientProperties;
         $frame->mechanism = null === $mechanism ? 'PLAIN' : $mechanism;
         $frame->response = $response;

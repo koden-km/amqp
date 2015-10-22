@@ -72,17 +72,22 @@ final class MockTransportBuilder
     /**
      * Configure the transport to receive a frame when a specific frame is sent.
      *
-     * @param OutgoingFrame|string $send  The outgoing frame to match (exact frame, or class name).
-     * @param IncomingFrame        $frame The frame that is received.
+     * @param OutgoingFrame|string $send          The outgoing frame to match (exact frame, or class name).
+     * @param IncomingFrame        $frame         The frame that is received.
+     * @param boolean              $matchChannels True to use the same channel for the receive frame as the send frame.
      */
-    public function receiveOnSend($send, IncomingFrame $recv)
+    public function receiveOnSend($send, IncomingFrame $recv, $matchChannels = true)
     {
         if (is_string($send)) {
             $send = $this->testCase->isInstanceOf($send);
         }
 
         $this->proxy->send->with($send)->does(
-            function () use ($recv) {
+            function ($frame) use ($recv, $matchChannels) {
+                if ($matchChannels) {
+                    $recv->frameChannelId = $frame->frameChannelId;
+                }
+
                 try {
                     $this->controller->onFrame($recv);
                 } catch (Exception $e) {

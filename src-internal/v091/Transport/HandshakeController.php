@@ -88,12 +88,12 @@ final class HandshakeController implements TransportController
      */
     public function onFrame(IncomingFrame $frame)
     {
-        if (0 !== $frame->channel) {
+        if (0 !== $frame->frameChannelId) {
             throw ProtocolException::create(
                 sprintf(
                     'Frame received (%s) on non-zero (%d) channel during AMQP handshake (state: %d).',
                     get_class($frame),
-                    $frame->channel,
+                    $frame->frameChannelId,
                     $this->state
                 )
             );

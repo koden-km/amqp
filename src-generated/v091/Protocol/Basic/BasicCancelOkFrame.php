@@ -5,16 +5,16 @@ use Recoil\Amqp\v091\Protocol\IncomingFrame;
 
 final class BasicCancelOkFrame implements IncomingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $consumerTag; // shortstr
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $consumerTag = null
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->consumerTag = $consumerTag;
 
         return $frame;

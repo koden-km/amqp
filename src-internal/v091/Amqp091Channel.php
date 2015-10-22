@@ -18,10 +18,10 @@ use Recoil\Amqp\v091\Transport\ServerApi;
  */
 final class Amqp091Channel implements Channel
 {
-    public function __construct(ServerApi $serverApi, $id)
+    public function __construct(ServerApi $serverApi, $channelId)
     {
         $this->serverApi = $serverApi;
-        $this->id = $id;
+        $this->channelId = $channelId;
     }
 
     /**
@@ -31,7 +31,7 @@ final class Amqp091Channel implements Channel
      */
     public function id()
     {
-        return $this->id;
+        return $this->channelId;
     }
 
     /**
@@ -156,9 +156,14 @@ final class Amqp091Channel implements Channel
      */
     public function close()
     {
-        throw new \LogicException('Not implemented.');
+        $this->serverApi->send(
+            ChannelCloseFrame::create($this->channelId)
+        );
+
+        $this->serverApi = null;
+        $this->channelId = null;
     }
 
     private $serverApi;
-    private $id;
+    private $channelId;
 }

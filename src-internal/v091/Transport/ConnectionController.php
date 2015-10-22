@@ -8,9 +8,13 @@ use function React\Promise\resolve;
 use LogicException;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Timer\TimerInterface;
-use React\Promise\Deferred;
 use Recoil\Amqp\ConnectionOptions;
+use Recoil\Amqp\Exception\ChannelException;
 use Recoil\Amqp\Exception\ConnectionException;
+use Recoil\Amqp\v091\Protocol\Channel\ChannelCloseFrame;
+use Recoil\Amqp\v091\Protocol\Channel\ChannelCloseOkFrame;
+use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenFrame;
+use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenOkFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionCloseFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionCloseOkFrame;
 use Recoil\Amqp\v091\Protocol\HeartbeatFrame;
@@ -39,12 +43,11 @@ final class ConnectionController implements TransportController, ServerApi
         $this->loop = $loop;
         $this->options = $options;
         $this->handshakeResult = $handshakeResult;
-        $this->state = self::STATE_STARTABLE;
-        $this->waiters = [];
-        $this->listeners = [];
-        $this->sendHeartbeatFrame = true;
-        $this->heartbeatsSinceFrameReceived = 0;
     }
+
+    ////////////////////////////////////////
+    // TransportController Implementation //
+    ////////////////////////////////////////
 
     /**
      * Begin managing a transport.
@@ -63,6 +66,7 @@ final class ConnectionController implements TransportController, ServerApi
             throw new LogicException('Controller has already been started.');
         }
 
+        // Start a heartbeat timer if the heartbeat is enabled ...
         if (null !== $this->handshakeResult->heartbeatInterval) {
             $this->heartbeatTimer = $this->loop->addPeriodicTimer(
                 $this->handshakeResult->heartbeatInterval,
@@ -74,151 +78,9 @@ final class ConnectionController implements TransportController, ServerApi
         $this->transport->resume($this);
 
         $this->state = self::STATE_OPEN;
+        $this->channels[0] = new ConnectionControllerChannel(0);
 
         return resolve($this);
-    }
-
-    /**
-     * Send a frame.
-     *
-     * @param OutgoingFrame $frame The frame to send.
-     */
-    public function send(OutgoingFrame $frame)
-    {
-        if (self::STATE_OPEN !== $this->state) {
-            throw ConnectionException::notOpen($this->options);
-        }
-
-        $this->sendHeartbeatFrame = false;
-
-        $this->transport->send($frame);
-    }
-
-    /**
-     * Wait for the next frame of a given type.
-     *
-     * This method is generally used to wait for a response from the server after
-     * sending a "synchronous" method frame (i.e, one with a matching "OK" frame).
-     *
-     * The "waiter" is pushed on to a channel/frame-type specific queue. When a
-     * matching frame is received the first waiter is popped from the queue and
-     * resolved using the frame as the value. If the queue is empty, any "listeners"
-     * registered for the same channel/frame-type are notified of the frame.
-     *
-     * @see ServerApi::listen() To register a listener that is notified of every
-     *                          received frame of a given type.
-     *
-     * @param string  $type    The type of frame (the PHP class name).
-     * @param integer $channel The channel on which to wait, or null for any channel.
-     *
-     * @return IncomingFrame [via promise] When the next matching frame is received.
-     * @throws Exception     [via promise] If the transport or channel is closed.
-     */
-    public function wait($type, $channel = 0)
-    {
-        if (self::STATE_OPEN !== $this->state) {
-            return reject(
-                ConnectionException::notOpen($this->options)
-            );
-        }
-
-        $deferred = null;
-        $deferred = new Deferred(
-            function () use (&$deferred, $channel, $type) {
-                array_splice(
-                    $this->waiters[$channel][$type],
-                    array_search(
-                        $deferred,
-                        $this->waiters[$channel][$type],
-                        true
-                    ),
-                    1
-                );
-            }
-        );
-
-        $this->waiters[$channel][$type][] = $deferred;
-
-        return $deferred->promise();
-    }
-
-    /**
-     * Receive notification when frames of a given type are received.
-     *
-     * This method is generally used to receive asynchronous/push style
-     * notifications from the server.
-     *
-     * The "listener" is added to channel/frame-type specific pool. When a matching
-     * frame is received that is not dispatched to one of the registered "waiters",
-     * each listener is notified using the frame as the value.
-     *
-     * @see ServerApi::wait() To register a one-time "waiter" that intercepts
-     *                        an incoming frame before it is dispathed to the "listeners".
-     *
-     * @param string  $type    The type of frame (the PHP class name).
-     * @param integer $channel The channel on which to wait, or null for any channel.
-     *
-     * @notify IncomingFrame For each matching frame that is received, unless it
-     *                       was matched a "waiter" registered via wait().
-     *
-     * @return null      [via promise] If the transport or channel is closed cleanly.
-     * @throws Exception [via promise] If the transport or channel is closed unexpectedly.
-     */
-    public function listen($type, $channel = 0)
-    {
-        if (self::STATE_OPEN !== $this->state) {
-            return reject(
-                ConnectionException::notOpen($this->options)
-            );
-        }
-
-        $deferred = null;
-        $deferred = new Deferred(
-            function () use (&$deferred, $channel, $type) {
-                array_splice(
-                    $this->listeners[$channel][$type],
-                    array_search(
-                        $deferred,
-                        $this->listeners[$channel][$type],
-                        true
-                    ),
-                    1
-                );
-            }
-        );
-
-        $this->listeners[$channel][$type][] = $deferred;
-
-        return $deferred->promise();
-    }
-
-    /**
-     * Get the server capabilities.
-     *
-     * @return ServerCapabilities
-     */
-    public function capabilities()
-    {
-        throw new LogicException('Not implemented.');
-    }
-
-    /**
-     * Close the connection.
-     */
-    public function close()
-    {
-        if ($this->state !== self::STATE_OPEN) {
-            return;
-        }
-
-        $this->closeTimeoutTimer = $this->loop->addTimer(
-            self::CLOSE_TIMEOUT,
-            [$this->transport, 'close']
-        );
-
-        $this->state = self::STATE_CLOSING;
-        $this->settle();
-        $this->transport->send(ConnectionCloseFrame::create());
     }
 
     /**
@@ -234,9 +96,43 @@ final class ConnectionController implements TransportController, ServerApi
         $this->heartbeatsSinceFrameReceived = 0;
 
         if (self::STATE_OPEN === $this->state) {
-            if ($frame instanceof ConnectionCloseFrame) {
+
+            // A new channel was opened successfully ...
+            if ($frame instanceof ChannelOpenOkFrame) {
+                $this->channels[$frame->frameChannelId]->onOpen();
+
+            // A channel was closed by the server ...
+            } elseif ($frame instanceof ChannelCloseFrame) {
+                $channel = $this->channels[$frame->frameChannelId];
+                unset($this->channels[$frame->frameChannelId]);
+
+                $channel->onClose(
+                    // @todo use more meaningful exception
+                    // @link https://github.com/recoilphp/amqp/issues/15
+                    ChannelException::closedUnexpectedly(
+                        $frame->frameChannelId,
+                        new RuntimeException(
+                            $frame->replyText,
+                            $frame->replyCode
+                        )
+                    )
+                );
+
+            // A channel was closed cleanly by the client ...
+            } elseif ($frame instanceof ChannelCloseOkFrame) {
+                $channel = $this->channels[$frame->frameChannelId];
+                unset($this->channels[$frame->frameChannelId]);
+
+                $channel->onClose();
+
+            // The connection was closed by the server ...
+            } elseif ($frame instanceof ConnectionCloseFrame) {
                 $this->state = self::STATE_CLOSING;
-                $this->settle(
+
+                $this->transport->send(ConnectionCloseOkFrame::create());
+                $this->transport->close();
+
+                $this->allChannelsClosed(
                     // @todo use more meaningful exception
                     // @link https://github.com/recoilphp/amqp/issues/15
                     ConnectionException::closedUnexpectedly(
@@ -247,25 +143,15 @@ final class ConnectionController implements TransportController, ServerApi
                         )
                     )
                 );
-                $this->transport->send(ConnectionCloseOkFrame::create());
-                $this->transport->close();
 
-                return;
+            // Any other channel frame is dispatched to the channel's
+            // waiters/listeners ...
+            } else {
+                $this->channels[$frame->frameChannelId]->dispatch($frame);
             }
 
-            $type = get_class($frame);
-
-            if (
-                isset($this->waiters[$frame->channel][$type])
-                && $this->waiters[$frame->channel][$type]
-            ) {
-                $deferred = array_shift($this->waiters[$frame->channel][$type]);
-                $deferred->resolve($frame);
-            } elseif (isset($this->listeners[$frame->channel][$type])) {
-                foreach ($this->listeners[$frame->channel][$type] as $deferred) {
-                    $deferred->notify($frame);
-                }
-            }
+        // When the connection is closing, any frames other than an acknowledgement
+        // of the closure are ignored ...
         } elseif (self::STATE_CLOSING === $this->state) {
             if ($frame instanceof ConnectionCloseOkFrame) {
                 $this->transport->close();
@@ -299,7 +185,8 @@ final class ConnectionController implements TransportController, ServerApi
         // exception ...
         } else {
             $this->state = self::STATE_CLOSED;
-            $this->settle(
+
+            $this->allChannelsClosed(
                 ConnectionException::closedUnexpectedly(
                     $this->options,
                     $exception
@@ -321,48 +208,230 @@ final class ConnectionController implements TransportController, ServerApi
 
         if (++$this->heartbeatsSinceFrameReceived >= 2) {
             $this->state = self::STATE_CLOSING;
-            $this->settle(
-                ConnectionException::heartbeatTimedOut(
+            $this->transport->close();
+
+            $this->allChannelsClosed(
+                    ConnectionException::heartbeatTimedOut(
                     $this->options,
                     $this->handshakeResult->heartbeatInterval
                 )
             );
-            $this->transport->close();
         }
     }
 
     /**
-     * Resolve/reject all pending waiters/listeners.
+     * Notify all channels of closure.
      *
-     * @param Exception|null $exception The rejection exception, if any.
+     * @param Exception|null $exception The exception that caused the closure, if any.
      */
-    private function settle(Exception $exception = null)
+    private function allChannelsClosed(Exception $exception = null)
     {
-        $waiters = $this->waiters;
-        $this->waiters = [];
+        $channels = $this->channels;
+        $this->channels = [];
 
-        foreach ($waiters as $queues) {
-            foreach ($queues as $queue) {
-                foreach ($queue as $deferred) {
-                    $deferred->reject($exception);
-                }
+        foreach ($channels as $channel) {
+            $channel->onClose($exception);
+        }
+    }
+
+    //////////////////////////////
+    // ServerApi Implementation //
+    //////////////////////////////
+
+    /**
+     * Send a frame.
+     *
+     * @param OutgoingFrame $frame The frame to send.
+     */
+    public function send(OutgoingFrame $frame)
+    {
+        if (self::STATE_OPEN !== $this->state) {
+            throw ConnectionException::notOpen($this->options);
+        }
+
+        $this->sendHeartbeatFrame = false;
+
+        $this->transport->send($frame);
+    }
+
+    /**
+     * Wait for the next frame of a given type.
+     *
+     * This method is generally used to wait for a response from the server after
+     * sending a "synchronous" method frame (i.e, one with a matching "OK" frame).
+     *
+     * The "waiter" is pushed on to a channel/frame-type specific queue. When a
+     * matching frame is received the first waiter is popped from the queue and
+     * resolved using the frame as the value. If the queue is empty, any "listeners"
+     * registered for the same channel/frame-type are notified of the frame.
+     *
+     * @see ServerApi::listen() To register a listener that is notified of every
+     *                          received frame of a given type.
+     *
+     * @param string  $type      The type of frame (the PHP class name).
+     * @param integer $channelId The channel on which to wait, or null for any channel.
+     *
+     * @return IncomingFrame       [via promise] When the next matching frame is received.
+     * @throws ChannelException    [via promise] If the channel is closed.
+     * @throws ConnectionException [via promise] If the connection is closed.
+     */
+    public function wait($type, $channelId = 0)
+    {
+        if (self::STATE_OPEN !== $this->state) {
+            return reject(ConnectionException::notOpen($this->options));
+        } elseif (!isset($this->channels[$channelId])) {
+            return reject(ChannelException::notOpen($channelId));
+        }
+
+        return $this->channels[$channelId]->waitForFrameType($type);
+    }
+
+    /**
+     * Receive notification when frames of a given type are received.
+     *
+     * This method is generally used to receive asynchronous/push style
+     * notifications from the server.
+     *
+     * The "listener" is added to channel/frame-type specific pool. When a matching
+     * frame is received that is not dispatched to one of the registered "waiters",
+     * each listener is notified using the frame as the value.
+     *
+     * @see ServerApi::wait() To register a one-time "waiter" that intercepts
+     *                        an incoming frame before it is dispathed to the "listeners".
+     *
+     * @param string  $type      The type of frame (the PHP class name).
+     * @param integer $channelId The channel on which to wait, or null for any channel.
+     *
+     * @notify IncomingFrame For each matching frame that is received, unless it
+     *                       was matched a "waiter" registered via wait().
+     *
+     * @return null                [via promise] If the transport or channel is closed cleanly.
+     * @throws ChannelException    [via promise] If the channel is closed.
+     * @throws ConnectionException [via promise] If the connection is closed.
+     */
+    public function listen($type, $channelId = 0)
+    {
+        if (self::STATE_OPEN !== $this->state) {
+            return reject(ConnectionException::notOpen($this->options));
+        } elseif (!isset($this->channels[$channelId])) {
+            return reject(ChannelException::notOpen($channelId));
+        }
+
+        return $this->channels[$channelId]->listenForFrameType($type);
+    }
+
+    /**
+     * Get the server capabilities.
+     *
+     * @return ServerCapabilities
+     */
+    public function capabilities()
+    {
+        throw new LogicException('Not implemented.');
+    }
+
+    /**
+     * Open a channel.
+     *
+     * @return integer             [via promise] The channel ID.
+     * @throws ChannelException    [via promise] If the channel could not be opened.
+     * @throws ConnectionException [via promise] If the connection is closed.
+     */
+    public function openChannel()
+    {
+        if (self::STATE_OPEN !== $this->state) {
+            return reject(ConnectionException::notOpen($this->options));
+        }
+
+        $channelId = $this->findUnusedChannelId();
+
+        if (null === $channelId) {
+            return reject(ChannelException::noAvailableChannels());
+        }
+
+        $channel = new ConnectionControllerChannel($channelId);
+        $this->channels[$channelId] = $channel;
+        $promise = $channel->waitForOpen();
+
+        $this->transport->send(ChannelOpenFrame::create($channelId));
+
+        return $promise;
+    }
+
+    /**
+     * Close a channel.
+     *
+     * Any waiters/listeners for this channel are settled.
+     *
+     * @param integer $channelId The channel ID.
+     *
+     * @return null                [via promise] On success.
+     * @throws ChannelException    [via promise] If the channel is closed.
+     * @throws ConnectionException [via promise] If the connection is closed.
+     */
+    public function closeChannel($channelId)
+    {
+        if (self::STATE_OPEN !== $this->state) {
+            return reject(ConnectionException::notOpen($this->options));
+        } elseif (!isset($this->channels[$channelId])) {
+            return reject(ChannelException::notOpen($channelId));
+        }
+
+        $promise = $this->channels[$channelId]->waitForClose();
+
+        $this->transport->send(ChannelCloseFrame::create($channelId));
+
+        return $promise;
+    }
+
+    /**
+     * Close the connection.
+     */
+    public function close()
+    {
+        if ($this->state !== self::STATE_OPEN) {
+            return;
+        }
+
+        $this->closeTimeoutTimer = $this->loop->addTimer(
+            self::CLOSE_TIMEOUT,
+            [$this->transport, 'close']
+        );
+
+        $this->state = self::STATE_CLOSING;
+        $this->allChannelsClosed();
+        $this->transport->send(ConnectionCloseFrame::create());
+    }
+
+    /**
+     * Find an unused channel ID.
+     *
+     * @return integer|null The channel ID, or null if none are available.
+     */
+    private function findUnusedChannelId()
+    {
+        // first check in range [next, max] ...
+        $max = $this->handshakeResult->maximumChannelCount;
+
+        for ($channelId = $this->nextChannelId; $channelId <= $max; ++$channelId) {
+            if (!isset($this->channels[$channelId])) {
+                $this->nextChannelId = $channelId + 1;
+
+                return $channelId;
             }
         }
 
-        $listeners = $this->listeners;
-        $this->listeners = [];
+        // then check in range [min, next) ...
+        for ($channelId = 1; $channelId < $this->nextChannelId; ++$channelId) {
+            if (!isset($this->channels[$channelId])) {
+                $this->nextChannelId = $channelId + 1;
 
-        foreach ($listeners as $lists) {
-            foreach ($lists as $list) {
-                foreach ($list as $deferred) {
-                    if ($exception) {
-                        $deferred->reject($exception);
-                    } else {
-                        $deferred->resolve();
-                    }
-                }
+                return $channelId;
             }
         }
+
+        // channel IDs are exhausted ...
+        return null;
     }
 
     /**
@@ -410,23 +479,18 @@ final class ConnectionController implements TransportController, ServerApi
      * @var integer The current state of the controller; one of the self::STATE_*
      *              constants.
      */
-    private $state;
+    private $state = self::STATE_STARTABLE;
 
     /**
-     * @var array A 2-dimensional array mapping channel/frame type to a queue of
-     *            deferreds ($waiters[$channel][$frameType] === [$deferred, ...]).
-     *
-     * @todo Benchmark against using single key composed of $channel and $frameType.
+     * @var array<integer, ConnectionControllerChannel> The set of open[ing] channels.
+     *                     The key is the channel ID.
      */
-    private $waiters;
+    private $channels = [];
 
     /**
-     * @var array A 2-dimensional array mapping channel/frame to a sequence of
-     *            deferreds ($waiters[$channel][$frameType] === [$deferred, ...]).
-     *
-     * @todo Benchmark against using single key composed of $channel and $frameType.
+     * @var integer The next (probably) available channel ID.
      */
-    private $listeners;
+    private $nextChannelId = 1;
 
     /**
      * @var Transport The transport that this controller is managing.
@@ -448,11 +512,11 @@ final class ConnectionController implements TransportController, ServerApi
     /**
      * @var boolean True if a heartbeat frame should be sent on the next heartbeat.
      */
-    private $sendHeartbeatFrame;
+    private $sendHeartbeatFrame = true;
 
     /**
      * @var integer The number of heartbeat ticks that have occurred since data
      *              was last received from the server.
      */
-    private $heartbeatsSinceFrameReceived;
+    private $heartbeatsSinceFrameReceived = 0;
 }

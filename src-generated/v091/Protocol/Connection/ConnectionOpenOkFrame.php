@@ -5,16 +5,16 @@ use Recoil\Amqp\v091\Protocol\IncomingFrame;
 
 final class ConnectionOpenOkFrame implements IncomingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $knownHosts; // shortstr
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $knownHosts = null
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->knownHosts = null === $knownHosts ? '' : $knownHosts;
 
         return $frame;

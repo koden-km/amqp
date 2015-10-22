@@ -6,14 +6,14 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 final class ConnectionCloseOkFrame implements IncomingFrame, OutgoingFrame
 {
-    public $channel;
+    public $frameChannelId;
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
 
         return $frame;
     }

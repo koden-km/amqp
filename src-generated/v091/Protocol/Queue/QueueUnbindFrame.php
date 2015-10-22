@@ -5,7 +5,7 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 final class QueueUnbindFrame implements OutgoingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $reserved1; // short
     public $queue; // shortstr
     public $exchange; // shortstr
@@ -13,7 +13,7 @@ final class QueueUnbindFrame implements OutgoingFrame
     public $arguments; // table
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $reserved1 = null
       , $queue = null
       , $exchange = null
@@ -22,7 +22,7 @@ final class QueueUnbindFrame implements OutgoingFrame
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->reserved1 = null === $reserved1 ? 0 : $reserved1;
         $frame->queue = null === $queue ? '' : $queue;
         $frame->exchange = $exchange;

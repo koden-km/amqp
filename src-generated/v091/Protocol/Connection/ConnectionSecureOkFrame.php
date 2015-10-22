@@ -5,16 +5,16 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 final class ConnectionSecureOkFrame implements OutgoingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $response; // longstr
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $response = null
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->response = $response;
 
         return $frame;

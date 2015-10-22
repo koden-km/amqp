@@ -7,8 +7,8 @@ use Recoil\Amqp\ConnectionOptions;
 use RuntimeException;
 
 /**
- * An exception used to indicate problems establishing or maintaining a
- * connection to an AMQP server.
+ * An exception used to indicate problems establishing or maintaining a connection
+ * to an AMQP server.
  */
 final class ConnectionException extends RuntimeException implements RecoilAmqpException
 {

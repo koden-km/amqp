@@ -5,7 +5,7 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 final class BasicPublishFrame implements OutgoingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $reserved1; // short
     public $exchange; // shortstr
     public $routingKey; // shortstr
@@ -13,7 +13,7 @@ final class BasicPublishFrame implements OutgoingFrame
     public $immediate; // bit
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $reserved1 = null
       , $exchange = null
       , $routingKey = null
@@ -22,7 +22,7 @@ final class BasicPublishFrame implements OutgoingFrame
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->reserved1 = null === $reserved1 ? 0 : $reserved1;
         $frame->exchange = null === $exchange ? '' : $exchange;
         $frame->routingKey = null === $routingKey ? '' : $routingKey;

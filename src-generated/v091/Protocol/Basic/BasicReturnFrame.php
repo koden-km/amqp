@@ -5,14 +5,14 @@ use Recoil\Amqp\v091\Protocol\IncomingFrame;
 
 final class BasicReturnFrame implements IncomingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $replyCode; // short
     public $replyText; // shortstr
     public $exchange; // shortstr
     public $routingKey; // shortstr
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $replyCode = null
       , $replyText = null
       , $exchange = null
@@ -20,7 +20,7 @@ final class BasicReturnFrame implements IncomingFrame
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->replyCode = $replyCode;
         $frame->replyText = null === $replyText ? '' : $replyText;
         $frame->exchange = $exchange;

@@ -5,16 +5,16 @@ use Recoil\Amqp\v091\Protocol\IncomingFrame;
 
 final class BasicGetEmptyFrame implements IncomingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $clusterId; // shortstr
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $clusterId = null
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->clusterId = null === $clusterId ? '' : $clusterId;
 
         return $frame;

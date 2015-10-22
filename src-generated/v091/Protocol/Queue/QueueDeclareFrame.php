@@ -5,7 +5,7 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 final class QueueDeclareFrame implements OutgoingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $reserved1; // short
     public $queue; // shortstr
     public $passive; // bit
@@ -16,7 +16,7 @@ final class QueueDeclareFrame implements OutgoingFrame
     public $arguments; // table
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $reserved1 = null
       , $queue = null
       , $passive = null
@@ -28,7 +28,7 @@ final class QueueDeclareFrame implements OutgoingFrame
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->reserved1 = null === $reserved1 ? 0 : $reserved1;
         $frame->queue = null === $queue ? '' : $queue;
         $frame->passive = null === $passive ? false : $passive;

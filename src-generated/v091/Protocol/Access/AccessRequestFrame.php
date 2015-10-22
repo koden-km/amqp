@@ -5,7 +5,7 @@ use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 
 final class AccessRequestFrame implements OutgoingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $realm; // shortstr
     public $exclusive; // bit
     public $passive; // bit
@@ -14,7 +14,7 @@ final class AccessRequestFrame implements OutgoingFrame
     public $read; // bit
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $realm = null
       , $exclusive = null
       , $passive = null
@@ -24,7 +24,7 @@ final class AccessRequestFrame implements OutgoingFrame
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->realm = null === $realm ? '/data' : $realm;
         $frame->exclusive = null === $exclusive ? false : $exclusive;
         $frame->passive = null === $passive ? true : $passive;

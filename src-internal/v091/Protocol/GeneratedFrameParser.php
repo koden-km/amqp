@@ -122,7 +122,7 @@ final class GeneratedFrameParser implements FrameParser
 
             $this->requiredBytes = self::MINIMUM_FRAME_SIZE;
 
-            $frame->channel = $fields['c'];
+            $frame->frameChannelId = $fields['c'];
 
             yield $frame;
         }

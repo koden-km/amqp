@@ -76,14 +76,26 @@ trait PromiseTestTrait
      */
     public function assertNotSettled(PromiseInterface $promise)
     {
+        $result = null;
+        $exception = null;
+
         $promise->then(
-            function () use (&$settled) {
-                $this->fail('Promise was unexpectedly resolved.');
+            function () use (&$result) {
+                $result = 'Promise was unexpectedly resolved.';
             },
-            function () use (&$settled) {
-                $this->fail('Promise was unexpectedly rejected.');
+            function ($e) use (&$result, &$exception) {
+                $result = 'Promise was unexpectedly rejected.';
+                $exception = $e;
             }
         );
+
+        if ($exception) {
+            throw $exception;
+        }
+
+        if ($result) {
+            $this->fail($result);
+        }
 
         // silence risky test warnings
         $this->assertTrue(true);

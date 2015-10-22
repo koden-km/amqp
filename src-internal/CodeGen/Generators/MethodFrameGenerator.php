@@ -66,7 +66,7 @@ final class MethodFrameGenerator implements CodeGenerator
 
         yield 'final class ' . $className . ' implements ' . implode(', ', $interfaces);
         yield '{';
-        yield '    public $channel;';
+        yield '    public $frameChannelId;';
 
         foreach ($method->arguments as $argument) {
             yield '    public $' . $this->toCamelCase($argument->name) . '; // ' . $this->resolveArgumentType($amqpSpec, $argument);
@@ -74,7 +74,7 @@ final class MethodFrameGenerator implements CodeGenerator
 
         yield;
         yield '    public static function create(';
-        yield '        $channel = 0';
+        yield '        $frameChannelId = 0';
 
         foreach ($method->arguments as $argument) {
             yield '      , $' . $this->toCamelCase($argument->name) . ' = null';
@@ -83,7 +83,7 @@ final class MethodFrameGenerator implements CodeGenerator
         yield '    ) {';
         yield '        $frame = new self();';
         yield;
-        yield '        $frame->channel = $channel;';
+        yield '        $frame->frameChannelId = $frameChannelId;';
 
         foreach ($method->arguments as $argument) {
             $name = $this->toCamelCase($argument->name);

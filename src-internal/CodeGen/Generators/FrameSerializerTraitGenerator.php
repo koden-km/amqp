@@ -104,7 +104,7 @@ final class FrameSerializerTraitGenerator implements CodeGenerator
                 $this->getConstant($amqpSpec, 'FRAME-END')
             );
 
-            yield '            return ' . $methodType . ' . pack("n", $frame->channel) . ' . $this->generateLiteralBuffer($buffer) . ';';
+            yield '            return ' . $methodType . ' . pack("n", $frame->frameChannelId) . ' . $this->generateLiteralBuffer($buffer) . ';';
 
             return;
         } // @codeCoverageIgnore
@@ -153,7 +153,7 @@ final class FrameSerializerTraitGenerator implements CodeGenerator
         );
 
         yield;
-        yield '            return ' . $methodType . ' . pack("nN", $frame->channel, strlen($payload)) . $payload . ' . $frameEnd . ';';
+        yield '            return ' . $methodType . ' . pack("nN", $frame->frameChannelId, strlen($payload)) . $payload . ' . $frameEnd . ';';
     }
 
     private function flushBitArgs()

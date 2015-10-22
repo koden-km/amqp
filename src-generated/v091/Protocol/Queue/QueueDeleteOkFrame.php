@@ -5,16 +5,16 @@ use Recoil\Amqp\v091\Protocol\IncomingFrame;
 
 final class QueueDeleteOkFrame implements IncomingFrame
 {
-    public $channel;
+    public $frameChannelId;
     public $messageCount; // long
 
     public static function create(
-        $channel = 0
+        $frameChannelId = 0
       , $messageCount = null
     ) {
         $frame = new self();
 
-        $frame->channel = $channel;
+        $frame->frameChannelId = $frameChannelId;
         $frame->messageCount = $messageCount;
 
         return $frame;
