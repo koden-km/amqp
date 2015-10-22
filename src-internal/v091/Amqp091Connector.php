@@ -45,7 +45,7 @@ final class Amqp091Connector implements Connector
         if (null === $connectionTimeout) {
             $defaultSocketTimeout = $iso->ini_get('default_socket_timeout');
             if (false !== $defaultSocketTimeout) {
-                $connectionTimeout = (float)$defaultSocketTimeout;
+                $connectionTimeout = (float) $defaultSocketTimeout;
             } else {
                 $connectionTimeout = self::DEFAULT_SOCKET_TIMEOUT;
             }

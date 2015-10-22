@@ -145,7 +145,7 @@ final class ConnectionOptions
     /**
      * Get the maximum time to allow for the connection to be established.
      *
-     * @return integer|float|null The timeout, in seconds or null to use the PHP default.
+     * @return integer|float|null The timeout (in seconds) or null to use the PHP default.
      */
     public function connectionTimeout()
     {
@@ -155,7 +155,7 @@ final class ConnectionOptions
     /**
      * Set the maximum time to allow for the connection to be established.
      *
-     * @param integer|float|null $timeout The timeout, in seconds or null to use the PHP default.
+     * @param integer|float|null $timeout The timeout (in seconds) or null to use the PHP default.
      *
      * @return ConnectionOptions
      */
