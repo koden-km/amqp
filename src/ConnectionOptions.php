@@ -155,7 +155,7 @@ final class ConnectionOptions
     /**
      * Set the maximum time to allow for the connection to be established.
      *
-     * @param integer|float|null $timeout The timeout, in seconds.
+     * @param integer|float|null $timeout The timeout, in seconds or null to use the PHP INI default.
      *
      * @return ConnectionOptions
      */
@@ -172,30 +172,30 @@ final class ConnectionOptions
     }
 
     /**
-     * Get how often the server and client must send heartbeat packets to keep the connection alive.
+     * Get how often the server and client must send heartbeat frames to keep the connection alive.
      *
-     * @return integer|float|null The timeout, in seconds.
+     * @return integer|float|null The interval, in seconds.
      */
-    public function heartbeatTimeout()
+    public function heartbeatInterval()
     {
-        return $this->heartbeatTimeout;
+        return $this->heartbeatInterval;
     }
 
     /**
-     * Set how often the server and client must send heartbeat packets to keep the connection alive.
+     * Set how often the server and client must send heartbeat frames to keep the connection alive.
      *
-     * @param integer|float|null $timeout The timeout, in seconds.
+     * @param integer|float|null $interval The interval, in seconds or null to use the negotiated handshake value.
      *
      * @return ConnectionOptions
      */
-    public function setHeartbeatTimeout($timeout)
+    public function setHeartbeatInterval($interval)
     {
-        if ($timeout === $this->heartbeatTimeout) {
+        if ($interval === $this->heartbeatInterval) {
             return $this;
         }
 
         $options = clone $this;
-        $options->heartbeatTimeout = $timeout;
+        $options->heartbeatInterval = $interval;
 
         return $options;
     }
@@ -217,7 +217,7 @@ final class ConnectionOptions
         $this->productName = PackageInfo::NAME;
         $this->productVersion = PackageInfo::VERSION;
         $this->connectionTimeout = null;
-        $this->heartbeatTimeout = null;
+        $this->heartbeatInterval = null;
     }
 
     private $host;
@@ -228,5 +228,5 @@ final class ConnectionOptions
     private $productName;
     private $productVersion;
     private $connectionTimeout;
-    private $heartbeatTimeout;
+    private $heartbeatInterval;
 }

@@ -131,12 +131,10 @@ class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
             $this->subject->connectionTimeout()
         );
 
-        $options = $this->subject->setConnectionTimeout(
-            120
-        );
+        $options = $this->subject->setConnectionTimeout(10);
 
         $this->assertSame(
-            120,
+            10,
             $options->connectionTimeout()
         );
 
@@ -157,29 +155,27 @@ class ConnectionOptionsTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testHeartbeatTimeout()
+    public function testHeartbeatInterval()
     {
         $this->assertNull(
-            $this->subject->heartbeatTimeout()
+            $this->subject->heartbeatInterval()
         );
 
-        $options = $this->subject->setHeartbeatTimeout(
-            120
-        );
+        $options = $this->subject->setHeartbeatInterval(60);
 
         $this->assertSame(
-            120,
-            $options->heartbeatTimeout()
+            60,
+            $options->heartbeatInterval()
         );
 
         $this->assertNull(
-            $this->subject->heartbeatTimeout()
+            $this->subject->heartbeatInterval()
         );
     }
 
-    public function testHeartbeatTimeoutWithNoChange()
+    public function testHeartbeatIntervalWithNoChange()
     {
-        $options = $this->subject->setHeartbeatTimeout(
+        $options = $this->subject->setHeartbeatInterval(
             null
         );
 

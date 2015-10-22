@@ -126,6 +126,106 @@ class Amqp091ConnectorTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function testConnectWithTimeoutSpecifiedInOptions()
+    {
+        $this->options = ConnectionOptions::create()->setConnectionTimeout(5);
+
+        $promise = $this->subject->connect($this->options);
+
+        Phony::inOrder(
+            $this->isolator->stream_socket_client->calledWith(
+                'tcp://localhost:5672',
+                null,
+                null,
+                5,
+                STREAM_CLIENT_CONNECT // | STREAM_CLIENT_ASYNC_CONNECT
+            ),
+            $this->isolator->stream_set_blocking->calledWith(
+                '<fd>',
+                false
+            ),
+            $this->isolator->new->calledWith(
+                StreamTransport::class,
+                $this->stream->mock()
+            ),
+            $this->isolator->new->calledWith(
+                HandshakeController::class,
+                $this->loop->mock(),
+                $this->options,
+                5.0 - 1.5 // 1.5 diff between microtime() calls
+            ),
+            $this->handshakeController->start->calledWith(
+                $this->transport->mock()
+            ),
+            $this->isolator->new->calledWith(
+                ConnectionController::class,
+                $this->loop->mock(),
+                $this->options,
+                $this->handshakeResult
+            ),
+            $this->connectionController->start->calledWith(
+                $this->transport->mock()
+            )
+        );
+
+        $this->assertEquals(
+            new Amqp091Connection(
+                $this->serverApi->mock()
+            ),
+            $this->assertResolved($promise)
+        );
+    }
+
+    public function testConnectWithTimeoutSpecifiedInPhpIni()
+    {
+        $this->isolator->ini_get->with('default_socket_timeout')->returns('9');
+
+        $promise = $this->subject->connect($this->options);
+
+        Phony::inOrder(
+            $this->isolator->stream_socket_client->calledWith(
+                'tcp://localhost:5672',
+                null,
+                null,
+                9.0,
+                STREAM_CLIENT_CONNECT // | STREAM_CLIENT_ASYNC_CONNECT
+            ),
+            $this->isolator->stream_set_blocking->calledWith(
+                '<fd>',
+                false
+            ),
+            $this->isolator->new->calledWith(
+                StreamTransport::class,
+                $this->stream->mock()
+            ),
+            $this->isolator->new->calledWith(
+                HandshakeController::class,
+                $this->loop->mock(),
+                $this->options,
+                9.0 - 1.5 // 1.5 diff between microtime() calls
+            ),
+            $this->handshakeController->start->calledWith(
+                $this->transport->mock()
+            ),
+            $this->isolator->new->calledWith(
+                ConnectionController::class,
+                $this->loop->mock(),
+                $this->options,
+                $this->handshakeResult
+            ),
+            $this->connectionController->start->calledWith(
+                $this->transport->mock()
+            )
+        );
+
+        $this->assertEquals(
+            new Amqp091Connection(
+                $this->serverApi->mock()
+            ),
+            $this->assertResolved($promise)
+        );
+    }
+
     public function testSocketCreationFailure()
     {
         $this->isolator->stream_socket_client

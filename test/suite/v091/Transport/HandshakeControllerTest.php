@@ -26,7 +26,7 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
     {
         $this->loop = Phony::fullMock(LoopInterface::class);
         $this->timer = Phony::fullMock(TimerInterface::class);
-        $this->options = ConnectionOptions::create()->setConnectionTimeout(3);
+        $this->options = ConnectionOptions::create();
         $this->timeout = 3.1415;
         $this->transport = Phony::fullMock(Transport::class);
         $this->transportBuilder = new MockTransportBuilder($this, $this->transport);
@@ -238,6 +238,66 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function testHandshakeWithHeartbeatLessThanSpecifiedInOptions()
+    {
+        $this->subject = new HandshakeController(
+            $this->loop->mock(),
+            $this->options->setHeartbeatInterval(30),
+            $this->timeout
+        );
+
+        $this->transportBuilder->receiveOnSend(
+            ConnectionStartOkFrame::class,
+            ConnectionTuneFrame::create(
+                0,   // channel
+                100, // channel max
+                200, // frame size max
+                10 // heartbeat interval
+            )
+        );
+
+        $this->assertEquals(
+            new HandshakeResult(
+                100, // maximumChannelCount
+                200, // maximumFrameSize
+                10 // heartbeatInterval
+            ),
+            $this->assertResolved(
+                $this->subject->start($this->transport->mock())
+            )
+        );
+    }
+
+    public function testHandshakeWithHeartbeatSpecifiedInOptions()
+    {
+        $this->subject = new HandshakeController(
+            $this->loop->mock(),
+            $this->options->setHeartbeatInterval(5),
+            $this->timeout
+        );
+
+        $this->transportBuilder->receiveOnSend(
+            ConnectionStartOkFrame::class,
+            ConnectionTuneFrame::create(
+                0,   // channel
+                100, // channel max
+                200, // frame size max
+                10 // heartbeat interval
+            )
+        );
+
+        $this->assertEquals(
+            new HandshakeResult(
+                100, // maximumChannelCount
+                200, // maximumFrameSize
+                5 // heartbeatInterval
+            ),
+            $this->assertResolved(
+                $this->subject->start($this->transport->mock())
+            )
+        );
+    }
+
     public function testCanNotBeStartedTwice()
     {
         $this->subject->start($this->transport->mock());
@@ -248,13 +308,6 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         );
 
         $this->subject->start($this->transport->mock());
-    }
-
-    public function testHandshakeWithHeartbeatLessThanSpecifiedInOptions()
-    {
-        // @todo Use heartbeat value from connection options
-        // @link https://github.com/recoilphp/amqp/issues/1
-        $this->markTestIncomplete();
     }
 
     public function testTimerIsCancelledUponFailure()
@@ -449,7 +502,7 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(
             ConnectionException::handshakeFailed(
                 $this->options,
-                'the handshake timed out after 3 seconds'
+                'the handshake timed out'
             ),
             $this->assertRejected($promise)
         );
