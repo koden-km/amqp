@@ -13,21 +13,26 @@ use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\PromiseTestTrait;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenFrame;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenOkFrame;
+use Recoil\Amqp\v091\Protocol\Connection\ConnectionCloseFrame;
+use Recoil\Amqp\v091\Protocol\Connection\ConnectionCloseOkFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionStartFrame;
 use Recoil\Amqp\v091\Protocol\HeartbeatFrame;
+use RuntimeException;
 
 class ConnectionControllerTest extends PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
         $this->loop = Phony::fullMock(LoopInterface::class);
-        $this->timer = Phony::fullMock(TimerInterface::class);
+        $this->heartbeatTimer = Phony::fullMock(TimerInterface::class);
+        $this->closeTimeoutTimer = Phony::fullMock(TimerInterface::class);
         $this->options = ConnectionOptions::create();
         $this->handshakeResult = new HandshakeResult(100, 200, 300);
         $this->transport = Phony::fullMock(Transport::class);
         $this->transportBuilder = new MockTransportBuilder($this, $this->transport);
 
-        $this->loop->addPeriodicTimer->returns($this->timer->mock());
+        $this->loop->addPeriodicTimer->returns($this->heartbeatTimer->mock());
+        $this->loop->addTimer->returns($this->closeTimeoutTimer->mock());
 
         $this->subject = new ConnectionController(
             $this->loop->mock(),
@@ -45,11 +50,11 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
             [$this->subject, 'onHeartbeat']
         );
 
-        $this->timer->cancel->never()->called();
+        $this->heartbeatTimer->cancel->never()->called();
 
         $this->subject->onTransportClosed();
 
-        $this->timer->cancel->called();
+        $this->heartbeatTimer->cancel->called();
     }
 
     public function testStartWithoutHeartbeat()
@@ -88,6 +93,22 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         $this->transport->send->calledWith(
             $this->identicalTo($frame)
         );
+    }
+
+    public function testSendWhenNotOpen()
+    {
+        $this->setExpectedException(
+            ConnectionException::class,
+            'Unable to use connection to AMQP server [localhost:5672] because it is closed.'
+        );
+
+        try {
+            $this->subject->send(HeartbeatFrame::create());
+        } catch (Exception $e) {
+            $this->transport->noInteraction();
+
+            throw $e;
+        }
     }
 
     public function testWait()
@@ -216,14 +237,14 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testWaitWhenNotStarted()
+    public function testWaitWhenNotOpen()
     {
-        $this->setExpectedException(
-            LogicException::class,
-            'Controller is not open.'
+        $this->assertEquals(
+            ConnectionException::notOpen($this->options),
+            $this->assertRejected(
+                $this->subject->wait(HeartbeatFrame::class)
+            )
         );
-
-        $this->subject->wait(HeartbeatFrame::class);
     }
 
     public function testListen()
@@ -395,14 +416,94 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testListenWhenNotStarted()
+    public function testListenWhenNotOpen()
     {
-        $this->setExpectedException(
-            LogicException::class,
-            'Controller is not open.'
+        $this->assertEquals(
+            ConnectionException::notOpen($this->options),
+            $this->assertRejected(
+                $this->subject->listen(HeartbeatFrame::class)
+            )
+        );
+    }
+
+    public function testClose()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $waiterPromise = $this->subject->wait(HeartbeatFrame::class);
+        $listenerPromise = $this->subject->listen(HeartbeatFrame::class);
+
+        $this->subject->close();
+
+        $this->loop->addTimer->calledWith(
+            5, // timeout
+            [$this->transport->mock(), 'close']
         );
 
-        $this->subject->listen(HeartbeatFrame::class);
+        $this->transport->send->calledWith(
+            ConnectionCloseFrame::create()
+        );
+
+        $this->assertNull(
+            $this->assertRejected($waiterPromise)
+        );
+
+        $this->assertNull(
+            $this->assertResolved($listenerPromise)
+        );
+
+        $this->transport->close->never()->called();
+
+        $this->subject->onFrame(ConnectionCloseOkFrame::create());
+
+        $this->transport->close->called();
+
+        $this->subject->onTransportClosed();
+
+        $this->closeTimeoutTimer->cancel->called();
+    }
+
+    public function testCloseWhenNotOpen()
+    {
+        $this->subject->close();
+
+        $this->loop->noInteraction();
+        $this->transport->noInteraction();
+
+        // silence risky test warning
+        // @todo remove this when bug fixed
+        // @link https://github.com/eloquent/phony/issues/83
+        $this->assertTrue(true);
+    }
+
+    public function testServerInitializedClose()
+    {
+        $this->subject->start($this->transport->mock());
+
+        $waiterPromise = $this->subject->wait(HeartbeatFrame::class);
+        $listenerPromise = $this->subject->listen(HeartbeatFrame::class);
+
+        $this->subject->onFrame(ConnectionCloseFrame::create());
+
+        $exception = ConnectionException::closedUnexpectedly(
+            $this->options,
+            new RuntimeException()
+        );
+
+        $this->assertEquals(
+            $exception,
+            $this->assertRejected($waiterPromise)
+        );
+
+        $this->assertEquals(
+            $exception,
+            $this->assertRejected($listenerPromise)
+        );
+
+        Phony::inOrder(
+            $this->transport->send->calledWith(ConnectionCloseOkFrame::create()),
+            $this->transport->close->called()
+        );
     }
 
     public function testHeartbeatSendsHeartbeatFrame()
@@ -439,32 +540,40 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
     {
         $this->subject->start($this->transport->mock());
 
+        $promise = $this->subject->wait(HeartbeatFrame::class);
+
         $this->subject->onHeartbeat();
 
         $this->transport->close->never()->called();
-        $this->timer->cancel->never()->called();
+        $this->assertNotSettled($promise);
 
         $this->subject->onHeartbeat();
 
         $this->transport->close->called();
-        $this->timer->cancel->called();
+        $this->assertEquals(
+            ConnectionException::heartbeatTimedOut(
+                $this->options,
+                300
+            ),
+            $this->assertRejected($promise)
+        );
     }
 
-    public function testHeartbeatDoesNotTimeOutIfFrameReceived()
+    public function testHeartbeatDoesNotTimeoutIfFrameReceived()
     {
         $this->subject->start($this->transport->mock());
 
         $this->subject->onHeartbeat();
 
         $this->transport->close->never()->called();
-        $this->timer->cancel->never()->called();
+        $this->heartbeatTimer->cancel->never()->called();
 
         $this->subject->onFrame(ChannelOpenOkFrame::create());
 
         $this->subject->onHeartbeat();
 
         $this->transport->close->never()->called();
-        $this->timer->cancel->never()->called();
+        $this->heartbeatTimer->cancel->never()->called();
     }
 
     use PromiseTestTrait;

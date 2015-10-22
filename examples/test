@@ -18,12 +18,12 @@ $connector
     ->connect($options)
     ->then(
         function ($connection) {
-            return $connection->channel();
-        }
-    )
-    ->then(
-        function ($channel) {
-            echo 'Got channel #' . $channel->id() . PHP_EOL;
+            return $connection->channel()->then(
+                function ($channel) use ($connection) {
+                    echo 'Got channel #' . $channel->id() . PHP_EOL;
+                    $connection->close();
+                }
+            );
         }
     )
     ->otherwise(

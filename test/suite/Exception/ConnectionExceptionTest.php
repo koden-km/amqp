@@ -30,6 +30,21 @@ class ConnectionExceptionTest extends PHPUnit_Framework_TestCase
         $this->commonAssertions($exception);
     }
 
+    public function testNotOpen()
+    {
+        $exception = ConnectionException::notOpen(
+            $this->options,
+            $this->previous
+        );
+
+        $this->assertSame(
+            'Unable to use connection to AMQP server [localhost:5672] because it is closed.',
+            $exception->getMessage()
+        );
+
+        $this->commonAssertions($exception);
+    }
+
     public function testHandshakeFailed()
     {
         $exception = ConnectionException::handshakeFailed(

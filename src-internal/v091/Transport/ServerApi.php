@@ -71,4 +71,9 @@ interface ServerApi
      * @return ServerCapabilities
      */
     public function capabilities();
+
+    /**
+     * Close the connection.
+     */
+    public function close();
 }

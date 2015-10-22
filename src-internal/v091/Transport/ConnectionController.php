@@ -11,9 +11,12 @@ use React\EventLoop\Timer\TimerInterface;
 use React\Promise\Deferred;
 use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\Exception\ConnectionException;
+use Recoil\Amqp\v091\Protocol\Connection\ConnectionCloseFrame;
+use Recoil\Amqp\v091\Protocol\Connection\ConnectionCloseOkFrame;
 use Recoil\Amqp\v091\Protocol\HeartbeatFrame;
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
+use RuntimeException;
 
 /**
  * A transport controller that manages a transport which has already completed a
@@ -61,7 +64,7 @@ final class ConnectionController implements TransportController, ServerApi
         }
 
         if (null !== $this->handshakeResult->heartbeatInterval) {
-            $this->timer = $this->loop->addPeriodicTimer(
+            $this->heartbeatTimer = $this->loop->addPeriodicTimer(
                 $this->handshakeResult->heartbeatInterval,
                 [$this, 'onHeartbeat']
             );
@@ -82,6 +85,10 @@ final class ConnectionController implements TransportController, ServerApi
      */
     public function send(OutgoingFrame $frame)
     {
+        if (self::STATE_OPEN !== $this->state) {
+            throw ConnectionException::notOpen($this->options);
+        }
+
         $this->sendHeartbeatFrame = false;
 
         $this->transport->send($frame);
@@ -110,7 +117,9 @@ final class ConnectionController implements TransportController, ServerApi
     public function wait($type, $channel = 0)
     {
         if (self::STATE_OPEN !== $this->state) {
-            throw new LogicException('Controller is not open.');
+            return reject(
+                ConnectionException::notOpen($this->options)
+            );
         }
 
         $deferred = null;
@@ -158,7 +167,9 @@ final class ConnectionController implements TransportController, ServerApi
     public function listen($type, $channel = 0)
     {
         if (self::STATE_OPEN !== $this->state) {
-            throw new LogicException('Controller is not open.');
+            return reject(
+                ConnectionException::notOpen($this->options)
+            );
         }
 
         $deferred = null;
@@ -192,6 +203,25 @@ final class ConnectionController implements TransportController, ServerApi
     }
 
     /**
+     * Close the connection.
+     */
+    public function close()
+    {
+        if ($this->state !== self::STATE_OPEN) {
+            return;
+        }
+
+        $this->closeTimeoutTimer = $this->loop->addTimer(
+            self::CLOSE_TIMEOUT,
+            [$this->transport, 'close']
+        );
+
+        $this->state = self::STATE_CLOSING;
+        $this->settle();
+        $this->transport->send(ConnectionCloseFrame::create());
+    }
+
+    /**
      * Notify the controller of an incoming frame.
      *
      * @param IncomingFrame $frame The received frame.
@@ -204,6 +234,25 @@ final class ConnectionController implements TransportController, ServerApi
         $this->heartbeatsSinceFrameReceived = 0;
 
         if (self::STATE_OPEN === $this->state) {
+            if ($frame instanceof ConnectionCloseFrame) {
+                $this->state = self::STATE_CLOSING;
+                $this->settle(
+                    // @todo use more meaningful exception
+                    // @link https://github.com/recoilphp/amqp/issues/15
+                    ConnectionException::closedUnexpectedly(
+                        $this->options,
+                        new RuntimeException(
+                            $frame->replyText,
+                            $frame->replyCode
+                        )
+                    )
+                );
+                $this->transport->send(ConnectionCloseOkFrame::create());
+                $this->transport->close();
+
+                return;
+            }
+
             $type = get_class($frame);
 
             if (
@@ -217,17 +266,10 @@ final class ConnectionController implements TransportController, ServerApi
                     $deferred->notify($frame);
                 }
             }
-
-            // // TODO
-            // if ($frame instanceof ConnectionCloseFrame) {
-            //     $this->closedByServer($frame);
-            //     break;
-            // }
         } elseif (self::STATE_CLOSING === $this->state) {
-            // // TODO
-            // if ($frame instanceof ConnectionCloseOkFrame) {
-            //     $this->closedByClient($frame);
-            // }
+            if ($frame instanceof ConnectionCloseOkFrame) {
+                $this->transport->close();
+            }
         }
     }
 
@@ -238,13 +280,32 @@ final class ConnectionController implements TransportController, ServerApi
      */
     public function onTransportClosed(Exception $exception = null)
     {
-        $this->done();
-        $this->settle(
-            ConnectionException::closedUnexpectedly(
-                $this->options,
-                $exception
-            )
-        );
+        if ($this->heartbeatTimer) {
+            $this->heartbeatTimer->cancel();
+            $this->heartbeatTimer = null;
+        }
+
+        if ($this->closeTimeoutTimer) {
+            $this->closeTimeoutTimer->cancel();
+            $this->closeTimeoutTimer = null;
+        }
+
+        // We were expecting a close, all waiters/listeners have already been
+        // settled ...
+        if (self::STATE_CLOSING === $this->state) {
+            $this->state = self::STATE_CLOSED;
+
+        // An unexpected closure, settle all waiters/listeners with an
+        // exception ...
+        } else {
+            $this->state = self::STATE_CLOSED;
+            $this->settle(
+                ConnectionException::closedUnexpectedly(
+                    $this->options,
+                    $exception
+                )
+            );
+        }
     }
 
     /**
@@ -259,25 +320,14 @@ final class ConnectionController implements TransportController, ServerApi
         }
 
         if (++$this->heartbeatsSinceFrameReceived >= 2) {
-            $this->done();
+            $this->state = self::STATE_CLOSING;
             $this->settle(
                 ConnectionException::heartbeatTimedOut(
                     $this->options,
                     $this->handshakeResult->heartbeatInterval
                 )
             );
-
             $this->transport->close();
-        }
-    }
-
-    private function done()
-    {
-        $this->state = self::STATE_CLOSED;
-
-        if ($this->timer) {
-            $this->timer->cancel();
-            $this->timer = null;
         }
     }
 
@@ -326,19 +376,20 @@ final class ConnectionController implements TransportController, ServerApi
     const STATE_OPEN = 1;
 
     /**
-     * The server has initiated a graceful closure.
+     * The close handshake has begin.
      */
-    const STATE_SERVER_CLOSING = 2;
-
-    /**
-     * The client has initiated a graceful closure.
-     */
-    const STATE_CLIENT_CLOSING = 3;
+    const STATE_CLOSING = 2;
 
     /**
      * The connection has been closed.
      */
-    const STATE_CLOSED = 4;
+    const STATE_CLOSED = 3;
+
+    /**
+     * The maximum time (in seconds) to wait for the server to respond to a
+     * close frame before forcefully closing the connection.
+     */
+    const CLOSE_TIMEOUT = 5;
 
     /**
      * @var LoopInterface The event loop used for the heartbeat timer
@@ -383,9 +434,16 @@ final class ConnectionController implements TransportController, ServerApi
     private $transport;
 
     /**
+     * @var TimerInterface|null The timer used to force close the connection if
+     *                          the server does not respond to close frames in
+     *                          a timely manner.
+     */
+    private $closeTimeoutTimer;
+
+    /**
      * @var TimerInterface|null The heartbeat timer, if heartbeat is enabled.
      */
-    private $timer;
+    private $heartbeatTimer;
 
     /**
      * @var boolean True if a heartbeat frame should be sent on the next heartbeat.

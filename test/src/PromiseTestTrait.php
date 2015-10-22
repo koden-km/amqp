@@ -52,15 +52,17 @@ trait PromiseTestTrait
      */
     public static function assertRejected(PromiseInterface $promise)
     {
+        $isRejected = false;
         $exception = null;
 
         $promise->otherwise(
-            function ($e) use (&$exception) {
+            function ($e) use (&$isRejected, &$exception) {
+                $isRejected = true;
                 $exception = $e;
             }
         );
 
-        if ($exception) {
+        if ($isRejected) {
             return $exception;
         }
 

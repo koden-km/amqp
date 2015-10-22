@@ -40,6 +40,30 @@ final class ConnectionException extends RuntimeException implements RecoilAmqpEx
     }
 
     /**
+     * Create an exception that indicates an attempt to use a connection that has
+     * already been closed.
+     *
+     * @param ConnectionOptions $options  The options used when establishing the connection.
+     * @param Exception|null    $previous The exception that caused this exception, if any.
+     *
+     * @return ConnectionException
+     */
+    public static function notOpen(
+        ConnectionOptions $options,
+        Exception $previous = null
+    ) {
+        return new self(
+            $options,
+            sprintf(
+                'Unable to use connection to AMQP server [%s:%d] because it is closed.',
+                $options->host(),
+                $options->port()
+            ),
+            $previous
+        );
+    }
+
+    /**
      * Create an exception that indicates that the credentials specified in the
      * connection options are incorrect.
      *
