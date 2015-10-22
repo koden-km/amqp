@@ -145,7 +145,7 @@ final class ConnectionOptions
     /**
      * Get the maximum time to allow for the connection to be established.
      *
-     * @return integer|float|null The timeout, in seconds.
+     * @return integer|float|null The timeout, in seconds or null to use the PHP default.
      */
     public function connectionTimeout()
     {
@@ -155,7 +155,7 @@ final class ConnectionOptions
     /**
      * Set the maximum time to allow for the connection to be established.
      *
-     * @param integer|float|null $timeout The timeout, in seconds or null to use the PHP INI default.
+     * @param integer|float|null $timeout The timeout, in seconds or null to use the PHP default.
      *
      * @return ConnectionOptions
      */
@@ -174,7 +174,7 @@ final class ConnectionOptions
     /**
      * Get how often the server and client must send heartbeat frames to keep the connection alive.
      *
-     * @return integer|float|null The interval, in seconds.
+     * @return integer|float|null The heatbeat interval (in seconds), or null to use the interval suggested by the server.
      */
     public function heartbeatInterval()
     {
@@ -184,7 +184,7 @@ final class ConnectionOptions
     /**
      * Set how often the server and client must send heartbeat frames to keep the connection alive.
      *
-     * @param integer|float|null $interval The interval, in seconds or null to use the negotiated handshake value.
+     * @param integer|float|null $interval The heatbeat interval (in seconds), or null to use the interval suggested by the server.
      *
      * @return ConnectionOptions
      */

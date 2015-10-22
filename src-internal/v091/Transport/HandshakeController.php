@@ -223,16 +223,18 @@ final class HandshakeController implements TransportController
             $this->handshakeResult->maximumFrameSize = $frame->frameMax;
         }
 
-        $optionsHeartbeat = $this->options->heartbeatInterval();
         if ($frame->heartbeat === self::HEARTBEAT_DISABLED) {
             $this->handshakeResult->heartbeatInterval = null;
-        } else if (
-            null !== $optionsHeartbeat
-            && $optionsHeartbeat < $frame->heartbeat
-        ) {
-            $this->handshakeResult->heartbeatInterval = $optionsHeartbeat;
         } else {
-            $this->handshakeResult->heartbeatInterval = $frame->heartbeat;
+            $optionsHeartbeat = $this->options->heartbeatInterval();
+            if (
+                null !== $optionsHeartbeat
+                && $optionsHeartbeat < $frame->heartbeat
+            ) {
+                $this->handshakeResult->heartbeatInterval = $optionsHeartbeat;
+            } else {
+                $this->handshakeResult->heartbeatInterval = $frame->heartbeat;
+            }
         }
 
         $this->state = self::STATE_WAIT_OPEN_OK;
