@@ -15,13 +15,13 @@ class StreamTransportTest extends PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $this->stream = Phony::fullMock(DuplexStreamInterface::class);
-        $this->parser = Phony::fullMock(FrameParser::class);
-        $this->serializer = Phony::fullMock(FrameSerializer::class);
-        $this->controller = Phony::fullMock(TransportController::class);
-        $this->incomingFrame1 = Phony::fullMock(IncomingFrame::class);
-        $this->incomingFrame2 = Phony::fullMock(IncomingFrame::class);
-        $this->outgoingFrame = Phony::fullMock(OutgoingFrame::class);
+        $this->stream = Phony::mock(DuplexStreamInterface::class);
+        $this->parser = Phony::mock(FrameParser::class);
+        $this->serializer = Phony::mock(FrameSerializer::class);
+        $this->controller = Phony::mock(TransportController::class);
+        $this->incomingFrame1 = Phony::mock(IncomingFrame::class);
+        $this->incomingFrame2 = Phony::mock(IncomingFrame::class);
+        $this->outgoingFrame = Phony::mock(OutgoingFrame::class);
 
         $this->parser->feed->returns([
             $this->incomingFrame1->mock(),

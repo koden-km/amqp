@@ -11,7 +11,7 @@ class GeneratedFrameParserTest extends PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $this->tableParser = Phony::fullMock(TableParser::class);
+        $this->tableParser = Phony::mock(TableParser::class);
 
         $this->subject = new GeneratedFrameParser(
             $this->tableParser->mock()

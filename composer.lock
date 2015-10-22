@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "e8b0d4c71e84e90192ce632294344d8d",
-    "content-hash": "cdcc6693cdf84813e609760a25223be1",
+    "hash": "7578bd95952ac017392a22579bdb2845",
+    "content-hash": "834f74f902db2a2166b574223d31f301",
     "packages": [
         {
             "name": "eloquent/enumeration",
@@ -456,16 +456,16 @@
         },
         {
             "name": "eloquent/phony",
-            "version": "0.4.0",
+            "version": "0.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/eloquent/phony.git",
-                "reference": "5970446e848f55d2db84f3b136e958510e22ef9e"
+                "reference": "1d6dcb0ede4202de2e7bfad89cdff9d7f1fba44e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/eloquent/phony/zipball/5970446e848f55d2db84f3b136e958510e22ef9e",
-                "reference": "5970446e848f55d2db84f3b136e958510e22ef9e",
+                "url": "https://api.github.com/repos/eloquent/phony/zipball/1d6dcb0ede4202de2e7bfad89cdff9d7f1fba44e",
+                "reference": "1d6dcb0ede4202de2e7bfad89cdff9d7f1fba44e",
                 "shasum": ""
             },
             "require": {
@@ -489,7 +489,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-develop": "0.5.x-dev"
+                    "dev-develop": "0.6.x-dev"
                 }
             },
             "autoload": {
@@ -527,7 +527,7 @@
                 "stubbing",
                 "test"
             ],
-            "time": "2015-10-20 05:32:44"
+            "time": "2015-10-22 03:42:42"
         },
         {
             "name": "guzzle/guzzle",

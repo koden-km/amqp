@@ -23,12 +23,12 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $this->loop = Phony::fullMock(LoopInterface::class);
-        $this->heartbeatTimer = Phony::fullMock(TimerInterface::class);
-        $this->closeTimeoutTimer = Phony::fullMock(TimerInterface::class);
+        $this->loop = Phony::mock(LoopInterface::class);
+        $this->heartbeatTimer = Phony::mock(TimerInterface::class);
+        $this->closeTimeoutTimer = Phony::mock(TimerInterface::class);
         $this->options = ConnectionOptions::create();
         $this->handshakeResult = new HandshakeResult(100, 200, 300);
-        $this->transport = Phony::fullMock(Transport::class);
+        $this->transport = Phony::mock(Transport::class);
         $this->transportBuilder = new MockTransportBuilder($this, $this->transport);
 
         $this->loop->addPeriodicTimer->returns($this->heartbeatTimer->mock());

@@ -10,7 +10,7 @@ class GeneratedFrameSerializerTest extends PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $this->tableSerializer = Phony::fullMock(TableSerializer::class);
+        $this->tableSerializer = Phony::mock(TableSerializer::class);
 
         $this->subject = new GeneratedFrameSerializer(
             $this->tableSerializer->mock()

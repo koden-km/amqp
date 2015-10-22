@@ -27,8 +27,8 @@ class Amqp091ConnectorTest extends PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $this->loop = Phony::fullMock(LoopInterface::class);
-        $this->isolator = Phony::fullMock(Isolator::class);
+        $this->loop = Phony::mock(LoopInterface::class);
+        $this->isolator = Phony::mock(Isolator::class);
         $this->options = ConnectionOptions::create();
 
         // Elapsed timer ...
@@ -37,16 +37,16 @@ class Amqp091ConnectorTest extends PHPUnit_Framework_TestCase
         // Streams ...
         $this->isolator->stream_socket_client->returns('<fd>');
         $this->isolator->stream_set_blocking->returns(true);
-        $this->stream = Phony::fullMock(DuplexStreamInterface::class);
+        $this->stream = Phony::mock(DuplexStreamInterface::class);
 
         $this->isolator->new->with(Stream::class, '*')->returns(
             $this->stream->mock()
         );
 
         // Transport and controllers ...
-        $this->transport = Phony::fullMock(Transport::class);
-        $this->handshakeController = Phony::fullMock(TransportController::class);
-        $this->connectionController = Phony::fullMock(TransportController::class);
+        $this->transport = Phony::mock(Transport::class);
+        $this->handshakeController = Phony::mock(TransportController::class);
+        $this->connectionController = Phony::mock(TransportController::class);
 
         $this->isolator->new->with(StreamTransport::class, '*')->returns(
             $this->transport->mock()
@@ -63,7 +63,7 @@ class Amqp091ConnectorTest extends PHPUnit_Framework_TestCase
             resolve($this->handshakeResult)
         );
 
-        $this->serverApi = Phony::fullMock(ServerApi::class);
+        $this->serverApi = Phony::mock(ServerApi::class);
         $this->connectionController->start->returns(
             resolve($this->serverApi->mock())
         );
