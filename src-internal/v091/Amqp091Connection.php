@@ -19,9 +19,6 @@ final class Amqp091Connection implements Connection
     public function __construct(ServerApi $serverApi)
     {
         $this->serverApi = $serverApi;
-        // $this->channels = [];
-        // $this->maxChannelId = 0xffff; // $serverApi->capabilities()->maximumChannelCount + 1;
-        // $this->nextChannelId = 1;
     }
 
     /**

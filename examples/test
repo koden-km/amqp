@@ -4,36 +4,24 @@ require __DIR__ . '/../vendor/autoload.php';
 
 Eloquent\Asplode\Asplode::install();
 
-use React\EventLoop\Factory;
 use Recoil\Amqp\ConnectionOptions;
-use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\v091\Amqp091Connector;
+use Recoil\Recoil;
 
-$options = ConnectionOptions::create();
-$loop = Factory::create();
+Recoil::run(
+    function () {
+        $options    = ConnectionOptions::create();
+        $connector  = new Amqp091Connector(yield Recoil::eventLoop());
+        $connection = (yield $connector->connect($options));
 
-$connector = new Amqp091Connector($loop);
+        $channel = (yield $connection->channel());
+        echo 'Opened channel #' . $channel->id() . PHP_EOL;
 
-$connector
-    ->connect($options)
-    ->then(
-        function ($connection) {
-            return $connection->channel()->then(
-                function ($channel) use ($connection) {
-                    echo 'Got channel #' . $channel->id() . PHP_EOL;
-                    $connection->close();
-                }
-            );
-        }
-    )
-    ->otherwise(
-        function ($error) {
-            if ($error instanceof ConnectionException) {
-                echo $error->getMessage() . PHP_EOL;
-            } else {
-                echo $error . PHP_EOL;
-            }
-        }
-    );
+        $queue = (yield $channel->queue());
+        echo 'Declared queue "' . $queue->name() . '"' . PHP_EOL;
 
-$loop->run();
+        // yield Recoil::sleep(60);
+
+        // $connection->close();
+    }
+);

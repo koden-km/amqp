@@ -36,7 +36,8 @@
     "require-dev": {
         "eloquent/asplode": "^2",
         "eloquent/phony": "^0.5",
-        "icecave/archer": "~1"
+        "icecave/archer": "~1",
+        "recoil/recoil": "^0.3.0"
     },
     "autoload": {
         "psr-4": {

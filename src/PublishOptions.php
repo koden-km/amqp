@@ -7,7 +7,7 @@ use Icecave\Flip\OptionSetTrait;
 /**
  * Options used to configure the behavior of message publishing.
  */
-final class PublishOption
+final class PublishOptions
 {
     use OptionSetTrait;
 

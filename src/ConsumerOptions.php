@@ -7,7 +7,7 @@ use Icecave\Flip\OptionSetTrait;
 /**
  * Options used to control the behavior of consumers.
  */
-final class ConsumerOption extends AbstractOption
+final class ConsumerOptions
 {
     use OptionSetTrait;
 

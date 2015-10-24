@@ -11,6 +11,8 @@ use Recoil\Amqp\ExchangeOptions;
 use Recoil\Amqp\ExchangeType;
 use Recoil\Amqp\QosScope;
 use Recoil\Amqp\QueueOptions;
+use Recoil\Amqp\v091\Protocol\Queue\QueueDeclareFrame;
+use Recoil\Amqp\v091\Protocol\Queue\QueueDeclareOkFrame;
 use Recoil\Amqp\v091\Transport\ServerApi;
 
 /**
@@ -129,7 +131,31 @@ final class Amqp091Channel implements Channel
         QueueOptions $options = null,
         DeclareMode $mode = null
     ) {
-        throw new \LogicException('Not implemented.');
+        if (null === $options) {
+            $options = QueueOptions::defaults();
+        }
+
+        $this->serverApi->send(
+            QueueDeclareFrame::create(
+                $this->channelId,
+                null, // reserved
+                $name,
+                DeclareMode::PASSIVE() === $mode,
+                $options->durable,
+                $options->exclusive,
+                $options->autoDelete
+            )
+        );
+
+        return $this->serverApi->wait(QueueDeclareOkFrame::class, $this->channelId)->then(
+            function ($frame) use ($options) {
+                return new Amqp091Queue(
+                    $this->serverApi,
+                    $frame->queue,
+                    $options
+                );
+            }
+        );
     }
 
     /**
