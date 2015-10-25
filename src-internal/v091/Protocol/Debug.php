@@ -11,7 +11,7 @@ use Recoil\Amqp\Connection;
  */
 final class Debug
 {
-    const ENABLED = true;
+    const ENABLED = false;
 
     public static function dumpOutgoingFrame(OutgoingFrame $frame)
     {

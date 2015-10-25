@@ -9,7 +9,7 @@ use Recoil\Amqp\v091\Transport\ServerApi;
 /**
  * A connection to an AMQP server that uses AMQP v0.9.1.
  *
- * @link http://www.amqp.org/specification/0-9-1/amqp-org-download
+ * @see http://www.amqp.org/specification/0-9-1/amqp-org-download
  */
 final class Amqp091Connection implements Connection
 {

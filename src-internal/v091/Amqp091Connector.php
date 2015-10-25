@@ -137,7 +137,7 @@ final class Amqp091Connector implements Connector
             $connectionTimeout,
 
             // @todo Connect asynchronously.
-            // @link https://github.com/recoilphp/amqp/issues/22
+            // @see https://github.com/recoilphp/amqp/issues/22
             STREAM_CLIENT_CONNECT // | STREAM_CLIENT_ASYNC_CONNECT
         );
 

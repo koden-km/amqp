@@ -12,7 +12,7 @@ use Eloquent\Enumeration\AbstractEnumeration;
  * Please note that RabbitMQ deviates from the AMQP specification in its
  * treatment of these scopes, see the link below for more information.
  *
- * @link https://www.rabbitmq.com/consumer-prefetch.html
+ * @see https://www.rabbitmq.com/consumer-prefetch.html
  */
 final class QosScope extends AbstractEnumeration
 {

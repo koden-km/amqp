@@ -24,7 +24,7 @@ final class PublishOptions
      * on that queue.
      *
      * @deprecated This feature is no longer supported by RabbitMQ.
-     * @link http://www.rabbitmq.com/blog/2012/11/19/breaking-things-with-rabbitmq-3-0/
+     * @see http://www.rabbitmq.com/blog/2012/11/19/breaking-things-with-rabbitmq-3-0/
      */
     private $immediate = false;
 }

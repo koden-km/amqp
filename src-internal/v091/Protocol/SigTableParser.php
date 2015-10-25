@@ -11,7 +11,7 @@ use Recoil\Amqp\Exception\ProtocolException;
  * (*NOT* the specification) along with Qpid's extensions. This parser is suitable
  * for use with RabbitMQ and Qpid.
  *
- * @link https://www.rabbitmq.com/amqp-0-9-1-errata.html#section_3
+ * @see https://www.rabbitmq.com/amqp-0-9-1-errata.html#section_3
  *
  * @see SpecTableParser for an implementation based on the AMQP 0.9.1 specification.
  */

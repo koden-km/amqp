@@ -77,7 +77,7 @@ final class Amqp091Channel implements Channel
      * Every queue is automatically bound to the nameless exchange with a
      * routing key the same as the queue name.
      *
-     * @link https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges
+     * @see https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges
      *
      * @see Channel::exchange() to declare a new exchange.
      * @see Channel::amqExchange() to use one of the "amq.<type>" exchanges, which are the pre-declared exchanges for each of the exchange types.
@@ -94,7 +94,7 @@ final class Amqp091Channel implements Channel
     /**
      * Get the pre-declared "amq.<type>" exchange of the given type.
      *
-     * @link https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges
+     * @see https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges
      *
      * @see Channel::exchange() to declare a new exchange.
      * @see Channel::directExchange() to use the nameless, direct exchange, which is used to route messages to specific queues, by name.

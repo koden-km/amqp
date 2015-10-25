@@ -7,7 +7,7 @@ use Eloquent\Enumeration\AbstractEnumeration;
 /**
  * The type of an exchange.
  *
- * @link https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges
+ * @see https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges
  */
 final class ExchangeType extends AbstractEnumeration
 {

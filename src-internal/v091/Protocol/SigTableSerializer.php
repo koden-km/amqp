@@ -12,7 +12,7 @@ use InvalidArgumentException;
  * (*NOT* the specification) along with Qpid's extensions. This serializer is
  * suitable for use with RabbitMQ and Qpid.
  *
- * @link https://www.rabbitmq.com/amqp-0-9-1-errata.html#section_3
+ * @see https://www.rabbitmq.com/amqp-0-9-1-errata.html#section_3
  *
  * @see SpecTableSerializer for an implementation based on the AMQP 0.9.1 specification.
  */
@@ -50,11 +50,11 @@ final class SigTableSerializer implements TableSerializer
     {
         if (is_string($value)) {
             // @todo Could be decimal (D) or byte array (x)
-            // @link https://github.com/recoilphp/amqp/issues/25
+            // @see https://github.com/recoilphp/amqp/issues/25
             return 'S' . $this->serializeLongString($value);
         } elseif (is_integer($value)) {
             // @todo Could be timestamp (T)
-            // @link https://github.com/recoilphp/amqp/issues/25
+            // @see https://github.com/recoilphp/amqp/issues/25
             if ($value >= 0) {
                 if ($value < 0x80) {
                     return 'b' . $this->serializeSignedInt8($value);
