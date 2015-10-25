@@ -469,6 +469,14 @@ class ConnectionControllerTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function testCapabilities()
+    {
+        $this->assertSame(
+            $this->handshakeResult->serverCapabilities,
+            $this->subject->capabilities()
+        );
+    }
+
     public function testOpenChannel()
     {
         $this->subject->start($this->transport->mock());

@@ -4,6 +4,7 @@ namespace Recoil\Amqp\v091\Transport;
 
 use Recoil\Amqp\Exception\ChannelException;
 use Recoil\Amqp\Exception\ConnectionException;
+use Recoil\Amqp\ServerCapabilities;
 use Recoil\Amqp\v091\Protocol\IncomingFrame;
 use Recoil\Amqp\v091\Protocol\OutgoingFrame;
 

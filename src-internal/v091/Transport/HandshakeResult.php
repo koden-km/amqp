@@ -2,11 +2,13 @@
 
 namespace Recoil\Amqp\v091\Transport;
 
+use Recoil\Amqp\ServerCapabilities;
+
 /**
  * The result produced by a successful AMQP handshake.
  *
  * @todo Add server capabilities.
- * @link https://github.com/recoilphp/amqp/issues/2
+ * @see https://github.com/recoilphp/amqp/issues/2
  */
 final class HandshakeResult
 {
@@ -43,6 +45,11 @@ final class HandshakeResult
     public $heartbeatInterval;
 
     /**
+     * @var ServerCapabilities The server's capabilities.
+     */
+    public $serverCapabilities;
+
+    /**
      * @param $maximumChannelCount integer      The maximum number of channels
      *                                          allowed.
      * @param $maximumFrameSize    integer      The maximum frame size (in bytes).
@@ -52,10 +59,12 @@ final class HandshakeResult
     public function __construct(
         $maximumChannelCount = self::MAX_CHANNELS,
         $maximumFrameSize = self::MAX_FRAME_SIZE,
-        $heartbeatInterval = null
+        $heartbeatInterval = null,
+        ServerCapabilities $serverCapabilities = null
     ) {
         $this->maximumChannelCount = $maximumChannelCount;
         $this->maximumFrameSize = $maximumFrameSize;
         $this->heartbeatInterval = $heartbeatInterval;
+        $this->serverCapabilities = $serverCapabilities ?: ServerCapabilities::defaults();
     }
 }

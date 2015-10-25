@@ -11,6 +11,7 @@ use React\EventLoop\Timer\TimerInterface;
 use Recoil\Amqp\ConnectionOptions;
 use Recoil\Amqp\Exception\ChannelException;
 use Recoil\Amqp\Exception\ConnectionException;
+use Recoil\Amqp\ServerCapabilities;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelCloseFrame;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelCloseOkFrame;
 use Recoil\Amqp\v091\Protocol\Channel\ChannelOpenFrame;
@@ -108,7 +109,7 @@ final class ConnectionController implements TransportController, ServerApi
 
                 $channel->onClose(
                     // @todo use more meaningful exception
-                    // @link https://github.com/recoilphp/amqp/issues/15
+                    // @see https://github.com/recoilphp/amqp/issues/15
                     ChannelException::closedUnexpectedly(
                         $frame->frameChannelId,
                         new RuntimeException(
@@ -134,7 +135,7 @@ final class ConnectionController implements TransportController, ServerApi
 
                 $this->allChannelsClosed(
                     // @todo use more meaningful exception
-                    // @link https://github.com/recoilphp/amqp/issues/15
+                    // @see https://github.com/recoilphp/amqp/issues/15
                     ConnectionException::closedUnexpectedly(
                         $this->options,
                         new RuntimeException(
@@ -327,7 +328,7 @@ final class ConnectionController implements TransportController, ServerApi
      */
     public function capabilities()
     {
-        throw new LogicException('Not implemented.');
+        return $this->handshakeResult->serverCapabilities;
     }
 
     /**

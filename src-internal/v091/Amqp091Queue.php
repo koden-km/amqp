@@ -4,20 +4,13 @@ namespace Recoil\Amqp\v091;
 
 use Recoil\Amqp\Channel;
 use Recoil\Amqp\ConsumerOptions;
-use Recoil\Amqp\DeclareMode;
 use Recoil\Amqp\Exception\ConnectionException;
-use Recoil\Amqp\Exception\DeclareException;
 use Recoil\Amqp\Exception\ResourceLockedException;
 use Recoil\Amqp\Exchange;
-use Recoil\Amqp\ExchangeOptions;
-use Recoil\Amqp\ExchangeType;
 use Recoil\Amqp\Message;
 use Recoil\Amqp\PublishOptions;
-use Recoil\Amqp\QosScope;
 use Recoil\Amqp\Queue;
 use Recoil\Amqp\QueueOptions;
-use Recoil\Amqp\v091\Protocol\Queue\QueueDeclareFrame;
-use Recoil\Amqp\v091\Protocol\Queue\QueueDeclareOkFrame;
 use Recoil\Amqp\v091\Transport\ServerApi;
 
 /**

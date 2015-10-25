@@ -181,6 +181,24 @@ final class HandshakeController implements TransportController
             );
         }
 
+        if (isset($frame->serverProperties['capabilities']['per_consumer_qos'])) {
+            $this->handshakeResult->serverCapabilities = $this
+                ->handshakeResult
+                ->serverCapabilities
+                ->perConsumerQos(
+                    $frame->serverProperties['capabilities']['per_consumer_qos']
+                );
+        }
+
+        if (isset($frame->serverProperties['capabilities']['exchange_exchange_bindings'])) {
+            $this->handshakeResult->serverCapabilities = $this
+                ->handshakeResult
+                ->serverCapabilities
+                ->exchangeToExchangeBindings(
+                    $frame->serverProperties['capabilities']['exchange_exchange_bindings']
+                );
+        }
+
         // Serialize credentials in "AMQPLAIN" format, which is essentially an
         // AMQP table without the 4-byte size header ...
         $user = $this->options->username();

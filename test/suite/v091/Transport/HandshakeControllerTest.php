@@ -12,6 +12,7 @@ use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\Exception\ProtocolException;
 use Recoil\Amqp\PackageInfo;
 use Recoil\Amqp\PromiseTestTrait;
+use Recoil\Amqp\ServerCapabilities;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionOpenFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionOpenOkFrame;
 use Recoil\Amqp\v091\Protocol\Connection\ConnectionStartFrame;
@@ -116,6 +117,47 @@ class HandshakeControllerTest extends PHPUnit_Framework_TestCase
             ),
             $this->assertResolved($promise)
         );
+    }
+
+    /**
+     * @dataProvider serverCapabilityTestVectors
+     */
+    public function testHandshakeServerCapabilities($frameKey, $optionKey)
+    {
+        $this->transportBuilder->receiveOnResume(
+            ConnectionStartFrame::create(
+                0,    // channel
+                null, // versionMajor
+                null, // versionMinor
+                [
+                    'capabilities' => [
+                        $frameKey => true,
+                    ],
+                ],
+                'AMQPLAIN', // mechanisms
+                null // locales
+            )
+        );
+
+        $expected = ServerCapabilities::none()->{$optionKey}(true);
+
+        $this->assertEquals(
+            new HandshakeResult(
+                100, // maximumChannelCount
+                200, // maximumFrameSize
+                300,  // heartbeatInterval
+                $expected
+            ),
+            $this->assertResolved(
+                $this->subject->start($this->transport->mock())
+            )
+        );
+    }
+
+    public function serverCapabilityTestVectors()
+    {
+        yield ['per_consumer_qos',           'perConsumerQos'];
+        yield ['exchange_exchange_bindings', 'exchangeToExchangeBindings'];
     }
 
     public function testHandshakeWithUnlimitedChannels()
