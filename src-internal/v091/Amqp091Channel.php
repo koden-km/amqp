@@ -11,6 +11,8 @@ use Recoil\Amqp\ExchangeOptions;
 use Recoil\Amqp\ExchangeType;
 use Recoil\Amqp\QosScope;
 use Recoil\Amqp\QueueOptions;
+use Recoil\Amqp\v091\Protocol\Exchange\ExchangeDeclareFrame;
+use Recoil\Amqp\v091\Protocol\Exchange\ExchangeDeclareOkFrame;
 use Recoil\Amqp\v091\Protocol\Queue\QueueDeclareFrame;
 use Recoil\Amqp\v091\Protocol\Queue\QueueDeclareOkFrame;
 use Recoil\Amqp\v091\Transport\ServerApi;
@@ -55,10 +57,10 @@ final class Amqp091Channel implements Channel
      * @param DeclareMode|null     $mode    The declare mode, ACTIVE (create the exchange, the default) or PASSIVE (check if the exchange exists).
      *
      * Via a promise:
-     * @return Exchange            The exchange.
-     * @throws DeclareException    if the exchange could not be declared because it already exists with different options.
-     * @throws ConnectionException if not connected to the AMQP server.
-     * @throws LogicException      if the channel has been closed.
+     * @return Exchange            [via promise] The exchange.
+     * @throws DeclareException    [via promise] if the exchange could not be declared because it already exists with different options.
+     * @throws ConnectionException [via promise] if not connected to the AMQP server.
+     * @throws ChannelException    [via promise] if the channel has been closed.
      */
     public function exchange(
         $name,
@@ -66,7 +68,35 @@ final class Amqp091Channel implements Channel
         ExchangeOptions $options = null,
         DeclareMode $mode = null
     ) {
-        throw new \LogicException('Not implemented.');
+        if (null === $options) {
+            $options = ExchangeOptions::defaults();
+        }
+
+        $this->serverApi->send(
+            ExchangeDeclareFrame::create(
+                $this->channelId,
+                null, // reserved
+                $name,
+                $type->value(),
+                DeclareMode::PASSIVE() === $mode,
+                $options->durable,
+                $options->autoDelete,
+                $options->internal
+            )
+        );
+
+        // @todo Throw appropriate exceptions
+
+        return $this->serverApi->wait(ExchangeDeclareOkFrame::class, $this->channelId)->then(
+            function ($frame) use ($name, $type, $options) {
+                return new Amqp091Exchange(
+                    $this->serverApi,
+                    $name,
+                    $type,
+                    $options
+                );
+            }
+        );
     }
 
     /**
@@ -84,11 +114,19 @@ final class Amqp091Channel implements Channel
      *
      * @return Exchange            [via promise] The exchange.
      * @throws ConnectionException [via promise] If not connected to the AMQP server.
-     * @throws LogicException      [via promise] If the channel has been closed.
+     * @throws ChannelException    [via promise] If the channel has been closed.
      */
     public function directExchange()
     {
-        throw new \LogicException('Not implemented.');
+        // @todo Throw appropriate exceptions
+        return resolve(
+            new Amqp091Exchange(
+                $this->serverApi,
+                '',
+                ExchangeType::DIRECT(),
+                ExchangeOptions::none()->durable(true)
+            )
+        );
     }
 
     /**
@@ -103,11 +141,19 @@ final class Amqp091Channel implements Channel
      *
      * @return Exchange            [via promise] The exchange.
      * @throws ConnectionException [via promise] If not connected to the AMQP server.
-     * @throws LogicException      [via promise] If the channel has been closed.
+     * @throws ChannelException    [via promise] If the channel has been closed.
      */
     public function amqExchange(ExchangeType $type)
     {
-        throw new \LogicException('Not implemented.');
+        // @todo Throw appropriate exceptions
+        return resolve(
+            new Amqp091Exchange(
+                $this->serverApi,
+                'amq.' . $type->value(),
+                $type,
+                ExchangeOptions::none()->durable(true)
+            )
+        );
     }
 
     /**
@@ -124,7 +170,7 @@ final class Amqp091Channel implements Channel
      * @throws DeclareException        [via promise] If the queue could not be declared because it already exists with different options.
      * @throws ResourceLockedException [via promise] If the queue already exists, but another connection has exclusive access.
      * @throws ConnectionException     [via promise] If not connected to the AMQP server.
-     * @throws LogicException          [via promise] If the channel has been closed.
+     * @throws ChannelException        [via promise] If the channel has been closed.
      */
     public function queue(
         $name = '',
@@ -147,6 +193,8 @@ final class Amqp091Channel implements Channel
             )
         );
 
+        // @todo Throw appropriate exceptions
+
         return $this->serverApi->wait(QueueDeclareOkFrame::class, $this->channelId)->then(
             function ($frame) use ($options) {
                 return new Amqp091Queue(
@@ -167,7 +215,7 @@ final class Amqp091Channel implements Channel
      *
      * @return null                [via promise] On success.
      * @throws ConnectionException [via promise] If not connected to the AMQP server.
-     * @throws LogicException      [via promise] If the channel has been closed.
+     * @throws ChannelException    [via promise] If the channel has been closed.
      *
      * Please note that RabbitMQ does not currently (as of v3.5.5) support
      * prefetch-size limits.
@@ -187,7 +235,6 @@ final class Amqp091Channel implements Channel
         );
 
         $this->serverApi = null;
-        $this->channelId = null;
     }
 
     private $serverApi;

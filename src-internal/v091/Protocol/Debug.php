@@ -60,7 +60,7 @@ final class Debug
         }
 
         $properties = get_object_vars($frame);
-        unset($properties['channelId']);
+        unset($properties['frameChannelId']);
 
         if (!$properties) {
             return;
@@ -74,12 +74,12 @@ final class Debug
             if (false !== strpos($value, PHP_EOL)) {
                 $value = str_replace(
                     PHP_EOL,
-                    PHP_EOL . '  ' . str_repeat(' ', $length) . ': ',
+                    PHP_EOL . '  | ' . str_repeat(' ', $length) . ': ',
                     $value
                 );
             }
             printf(
-                '  %' . $length . 's: %s' . PHP_EOL,
+                '  | %' . $length . 's: %s' . PHP_EOL,
                 $key,
                 $value
             );

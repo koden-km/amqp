@@ -39,7 +39,7 @@ interface Queue
      * @param Channel|null        $channel The channel to use, or null to use an automatically managed channel.
      *
      * @throws ConnectionException      if not connected to the AMQP server.
-     * @throws InvalidArgumentException if a routing key is required but not provided, and vice-versa.
+     * @throws InvalidArgumentException If a routing key is required but not provided.
      */
     public function publish(
         Message $message,
@@ -88,7 +88,7 @@ interface Queue
      *
      * @return null                     [via promise] On success.
      * @throws ConnectionException      [via promise] If not connected to the AMQP server.
-     * @throws InvalidArgumentException [via promise] If a routing key is required but not provided, and vice-versa.
+     * @throws InvalidArgumentException [via promise] If a routing key is required but not provided.
      */
     public function bind(Exchange $source, $routingKey = '');
 
@@ -100,7 +100,7 @@ interface Queue
      *
      * @return null                     [via promise] On success.
      * @throws ConnectionException      [via promise] If not connected to the AMQP server.
-     * @throws InvalidArgumentException [via promise] If a routing key is required but not provided, and vice-versa.
+     * @throws InvalidArgumentException [via promise] If a routing key is required but not provided.
      */
     public function unbind(Exchange $source, $routingKey = '');
 }

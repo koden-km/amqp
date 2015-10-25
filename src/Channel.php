@@ -2,6 +2,7 @@
 
 namespace Recoil\Amqp;
 
+use Recoil\Amqp\Exception\ChannelException;
 use Recoil\Amqp\Exception\ConnectionException;
 use Recoil\Amqp\Exception\DeclareException;
 use Recoil\Amqp\Exception\ResourceLockedException;
@@ -37,10 +38,10 @@ interface Channel
      * @param DeclareMode|null     $mode    The declare mode, ACTIVE (create the exchange, the default) or PASSIVE (check if the exchange exists).
      *
      * Via a promise:
-     * @return Exchange            The exchange.
-     * @throws DeclareException    if the exchange could not be declared because it already exists with different options.
-     * @throws ConnectionException if not connected to the AMQP server.
-     * @throws LogicException      if the channel has been closed.
+     * @return Exchange            [via promise] The exchange.
+     * @throws DeclareException    [via promise] if the exchange could not be declared because it already exists with different options.
+     * @throws ConnectionException [via promise] if not connected to the AMQP server.
+     * @throws ChannelException    [via promise] if the channel has been closed.
      */
     public function exchange(
         $name,
@@ -64,7 +65,7 @@ interface Channel
      *
      * @return Exchange            [via promise] The exchange.
      * @throws ConnectionException [via promise] if not connected to the AMQP server.
-     * @throws LogicException      [via promise] if the channel has been closed.
+     * @throws ChannelException    [via promise] if the channel has been closed.
      */
     public function directExchange();
 
@@ -80,7 +81,7 @@ interface Channel
      *
      * @return Exchange            [via promise] The exchange.
      * @throws ConnectionException [via promise] If not connected to the AMQP server.
-     * @throws LogicException      [via promise] If the channel has been closed.
+     * @throws ChannelException    [via promise] If the channel has been closed.
      */
     public function amqExchange(ExchangeType $type);
 
@@ -98,7 +99,7 @@ interface Channel
      * @throws DeclareException        [via promise] If the queue could not be declared because it already exists with different options.
      * @throws ResourceLockedException [via promise] If the queue already exists, but another connection has exclusive access.
      * @throws ConnectionException     [via promise] If not connected to the AMQP server.
-     * @throws LogicException          [via promise] If the channel has been closed.
+     * @throws ChannelException        [via promise] If the channel has been closed.
      */
     public function queue(
         $name = '',
@@ -115,7 +116,7 @@ interface Channel
      *
      * @return null                [via promise] On success.
      * @throws ConnectionException [via promise] If not connected to the AMQP server.
-     * @throws LogicException      [via promise] If the channel has been closed.
+     * @throws ChannelException    [via promise] If the channel has been closed.
      *
      * Please note that RabbitMQ does not currently (as of v3.5.5) support
      * prefetch-size limits.
